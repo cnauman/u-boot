@@ -35,7 +35,7 @@
 #include <asm/io.h>
 #include <asm/arch/s3c24x0_cpu.h>
 
-int timer_load_val = 0;
+static int timer_load_val = 0;
 static ulong timer_clk;
 
 /* macro to read the 16 bit timer */

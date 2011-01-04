@@ -29,7 +29,7 @@
 
 #include <asm/arch/s3c24x0_cpu.h>
 #include <asm/io.h>
-
+#define USB_CEN_MASK (1 << 4)
 int usb_cpu_init(void)
 {
 	struct s3c24x0_clock_power *clk_power = s3c24x0_get_base_clock_power();
@@ -46,7 +46,7 @@ int usb_cpu_init(void)
 	/*
 	 * Enable USB host clock.
 	 */
-	writel(readl(&clk_power->clkcon) | (1 << 4), &clk_power->clkcon);
+	writel(readl(&clk_power->clkcon) | USB_CEN_MASK, &clk_power->clkcon);
 
 	return 0;
 }
@@ -55,14 +55,14 @@ int usb_cpu_stop(void)
 {
 	struct s3c24x0_clock_power *clk_power = s3c24x0_get_base_clock_power();
 	/* may not want to do this */
-	writel(readl(&clk_power->clkcon) & ~(1 << 4), &clk_power->clkcon);
+	writel(readl(&clk_power->clkcon) & ~USB_CEN_MASK, &clk_power->clkcon);
 	return 0;
 }
 
 int usb_cpu_init_fail(void)
 {
 	struct s3c24x0_clock_power *clk_power = s3c24x0_get_base_clock_power();
-	writel(readl(&clk_power->clkcon) & ~(1 << 4), &clk_power->clkcon);
+	writel(readl(&clk_power->clkcon) & ~USB_CEN_MASK, &clk_power->clkcon);
 	return 0;
 }
 
