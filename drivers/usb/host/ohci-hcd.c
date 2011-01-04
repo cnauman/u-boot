@@ -75,7 +75,7 @@
 #endif
 
 #undef OHCI_VERBOSE_DEBUG	/* not always helpful */
-#undef DEBUG
+#define DEBUG //#undef DEBUG
 #undef SHOW_INFO
 #undef OHCI_FILL_TRACE
 

@@ -330,7 +330,7 @@ int do_nand_env_oob(cmd_tbl_t *cmdtp, int argc, char *const argv[])
 		ops.oobbuf = (void *) oob_buf;
 
 		oob_buf[0] = ENV_OOB_MARKER;
-		oob_buf[1] = addr / nand->erasesize;
+		oob_buf[1] = (uint32_t)addr / nand->erasesize;
 
 		ret = nand->write_oob(nand, ENV_OFFSET_SIZE, &ops);
 		if (ret) {
