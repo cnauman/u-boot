@@ -53,19 +53,8 @@
 /*
  * Check whether a USB memory stick is plugged in.
  * If one is found:
- *	1) if prepare.img ist found load it into memory. If it is
+ *	1) if install.img ist found load it into memory. If it is
  *		valid then run it.
- *	2) if preinst.img is found load it into memory. If it is
- *		valid then run it. Update the EEPROM.
- *	3) if firmw_01.img is found load it into memory. If it is valid,
- *		burn it into FLASH and update the EEPROM.
- *	4) if kernl_01.img is found load it into memory. If it is valid,
- *		burn it into FLASH and update the EEPROM.
- *	5) if app.img is found load it into memory. If it is valid,
- *		burn it into FLASH and update the EEPROM.
- *	6) if disk.img is found load it into memory. If it is valid,
- *		burn it into FLASH and update the EEPROM.
- *	7) if postinst.img is found load it into memory. If it is
  *		valid then run it. Update the EEPROM.
  */
 
@@ -79,13 +68,13 @@
 #endif	/* AU_DEBUG */
 
 /* possible names of files on the USB stick. */
-#define AU_PREPARE	"prepare.img"
-#define AU_PREINST	"preinst.img"
-#define AU_FIRMWARE	"firmw_01.img"
-#define AU_KERNEL	"kernl_01.img"
-#define AU_APP		"app.img"
-#define AU_DISK		"disk.img"
-#define AU_POSTINST	"postinst.img"
+#define AU_PREPARE	"install.img"
+//#define AU_PREINST	"preinst.img"
+//#define AU_FIRMWARE	"firmw_01.img"
+//#define AU_KERNEL	"kernl_01.img"
+//#define AU_APP		"app.img"
+//#define AU_DISK		"disk.img"
+//#define AU_POSTINST	"postinst.img"
 
 struct flash_layout
 {
@@ -516,18 +505,18 @@ do_auto_update(void)
 	/* initialize the array of file names */
 	memset(aufile, 0, sizeof(aufile));
 	aufile[IDX_PREPARE] = AU_PREPARE;
-	aufile[IDX_PREINST] = AU_PREINST;
-	aufile[IDX_FIRMWARE] = AU_FIRMWARE;
-	aufile[IDX_KERNEL] = AU_KERNEL;
-	aufile[IDX_APP] = AU_APP;
-	aufile[IDX_DISK] = AU_DISK;
-	aufile[IDX_POSTINST] = AU_POSTINST;
+	//aufile[IDX_PREINST] = AU_PREINST;
+	//aufile[IDX_FIRMWARE] = AU_FIRMWARE;
+	//aufile[IDX_KERNEL] = AU_KERNEL;
+	//aufile[IDX_APP] = AU_APP;
+	//aufile[IDX_DISK] = AU_DISK;
+	//aufile[IDX_POSTINST] = AU_POSTINST;
 	/* initialize the array of flash sizes */
 	memset(ausize, 0, sizeof(ausize));
-	ausize[IDX_FIRMWARE] = (AU_FL_FIRMWARE_ND + 1) - AU_FL_FIRMWARE_ST;
-	ausize[IDX_KERNEL] = (AU_FL_KERNEL_ND + 1) - AU_FL_KERNEL_ST;
-	ausize[IDX_APP] = (AU_FL_APP_ND + 1) - AU_FL_APP_ST;
-	ausize[IDX_DISK] = (AU_FL_DISK_ND + 1) - AU_FL_DISK_ST;
+	//ausize[IDX_FIRMWARE] = (AU_FL_FIRMWARE_ND + 1) - AU_FL_FIRMWARE_ST;
+	//ausize[IDX_KERNEL] = (AU_FL_KERNEL_ND + 1) - AU_FL_KERNEL_ST;
+	//ausize[IDX_APP] = (AU_FL_APP_ND + 1) - AU_FL_APP_ST;
+	//ausize[IDX_DISK] = (AU_FL_DISK_ND + 1) - AU_FL_DISK_ST;
 	/*
 	 * now check whether start and end are defined using environment
 	 * variables.

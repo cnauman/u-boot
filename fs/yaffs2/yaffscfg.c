@@ -182,7 +182,7 @@ int yaffs_StartUp(void)
 		flashDev->nDataBytesPerChunk = mtd->oobblock;
 		flashDev->nChunksPerBlock = mtd->erasesize / mtd->oobblock;
 #endif
-		nBlocks = mtd->size / mtd->erasesize;
+		nBlocks = lldiv(mtd->size, mtd->erasesize);
 
 		flashDev->nCheckpointReservedBlocks = 10;
 		flashDev->startBlock = 0;

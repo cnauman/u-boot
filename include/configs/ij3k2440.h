@@ -121,7 +121,7 @@
 #define CONFIG_NETMASK          255.255.255.0
 #define CONFIG_IPADDR		10.1.2.13
 #define CONFIG_SERVERIP		10.1.2.5
-#define CONFIG_BOOTCOMMAND	"run chkEnv; run chkVid; run chkBoot"
+#define CONFIG_BOOTCOMMAND	"run chkMfg; run chkEnv; run chkVid; run chkBoot"
 
 #define CONFIG_DOS_PARTITION	1
 
@@ -162,9 +162,15 @@
 #define CONFIG_STACKSIZE_FIQ	(4*1024)	/* FIQ stack */
 #endif
 
+/* for s3c ohci driver */
+//#define CONFIG_USE_CPU_USB_OHCI
+//#define CONFIG_USB_OHCI
+/* end of s3c ohci drivers */
+#define CONFIG_SYS_NO_DCACHE /* allows usb to work ?? */
 #define CONFIG_USB_OHCI_NEW	1
 #define CONFIG_CMD_USB		1
 #define CONFIG_USB_STORAGE
+
 
 #define CONFIG_SYS_USB_OHCI_CPU_INIT	1
 #define CONFIG_SYS_USB_OHCI_REGS_BASE	0x49000000 /* S3C24X0_USB_HOST_BASE */
@@ -262,6 +268,7 @@
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
 #define CONFIG_CMD_PING
+#define CONFIG_YAFFS2
 #define CONFIG_MISC_INIT_R
 
 #define CONFIG_EXTRA_ENV_SETTINGS	\
@@ -274,6 +281,7 @@
 	"file=script.img\0" \
 	"netScript=tftp ${fileaddr} ${serverip}:${file}; source ${fileaddr}\0" \
 	"chkBoot=if nboot.e kernel; then setenv stdout serial; bootm; else run netScript; fi\0" \
+	"chkMfg=if iminfo 100000; then source 100000; fi\0" \
 	"bootargs_base=console=ttySAC0,57600 noinitrd\0" \
 	"bootargs_init=init=/sbin/init\0" \
 	"root_nand=root=/dev/mtdblock3 rootfstype=jffs2\0" \

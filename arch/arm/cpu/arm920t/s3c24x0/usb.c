@@ -29,7 +29,7 @@
 
 #include <asm/arch/s3c24x0_cpu.h>
 #include <asm/io.h>
-#define USB_CEN_MASK (1 << 4)
+#define USB_CEN_MASK (1 << 6)
 int usb_cpu_init(void)
 {
 	struct s3c24x0_clock_power *clk_power = s3c24x0_get_base_clock_power();
