@@ -90,7 +90,7 @@ static void announce_and_cleanup(void)
 		udc_disconnect();
 	}
 #endif
-	puts("b4 cleanup\n"); cleanup_before_linux(); puts("after cleanup\n");
+	cleanup_before_linux();
 }
 
 int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
@@ -151,7 +151,7 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
 #endif
 
 	announce_and_cleanup();
-printf("Kernel entry\n");
+
 	kernel_entry(0, machid, bd->bi_boot_params);
 	/* does not return */
 
