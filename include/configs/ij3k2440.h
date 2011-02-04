@@ -67,7 +67,7 @@
  */
 #define CONFIG_S3C24X0_SERIAL
 #define CONFIG_SERIAL_MULTI
-#define CONFIG_SERIAL1          1	/* we use SERIAL 1 on IJ3K2440 */
+#define CONFIG_SERIAL2          1      /* we use SERIAL 1 on IJ3K2440 */
 
 /************************************************************
  * RTC
@@ -115,8 +115,10 @@
 #endif
 
 
-#define CONFIG_BOOTDELAY	1
-#define CONFIG_BOOTARGS	"console=ttySAC0,57600 noinitrd init=/sbin/init ij3k=1tb root=/dev/mtdblock3 rootfstype=jffs2"
+#define CONFIG_BOOTDELAY	0
+#define CONFIG_AUTOBOOT_STOP_STR "v"
+#define CONFIG_ZERO_BOOTDELAY_CHECK
+#define CONFIG_BOOTARGS	"noinitrd init=/sbin/init ij3k=1tb root=/dev/mtdblock3 rootfstype=jffs2"
 /*#define CONFIG_ETHADDR	08:00:3e:26:0a:5b */
 #define CONFIG_NETMASK          255.255.255.0
 #define CONFIG_IPADDR		10.1.2.13
@@ -272,31 +274,24 @@
 #define CONFIG_MISC_INIT_R
 
 #define CONFIG_EXTRA_ENV_SETTINGS	\
-	/*"usbtty=cdc_acm\0"*/ \
 	CONFIG_MTDPARTS_DEFAULT "\0" \
 	"ij3k2440=ij3k=1tb\0" \
-        /*"console=serial\0"*/ \
 	"fileaddr=32000000\0" \
 	"serverip=10.1.2.5\0" \
 	"file=script.img\0" \
 	"netScript=tftp ${fileaddr} ${serverip}:${file}; source ${fileaddr}\0" \
-	"chkBoot=if nboot.e kernel; then setenv stdout serial; bootm; else run netScript; fi\0" \
+	"chkBoot=if nboot.e kernel; then bootm; else run netScript; fi\0" \
 	"chkMfg=if iminfo 100000; then source 100000; fi\0" \
-	"bootargs_base=console=ttySAC0,57600 noinitrd\0" \
+	"bootargs_base=console=ttySAC1,57600 noinitrd\0" \
 	"bootargs_init=init=/sbin/init\0" \
 	"root_nand=root=/dev/mtdblock3 rootfstype=jffs2\0" \
 	"chkEnv=if nand env.oob get; then echo OK; else nand env.oob set env; fi\0" \
 	"chkVid=if print videomode; then echo Video OK; else vid set; setenv stdout vga; setenv stderr vga; saveenv; reset; fi\0" \
-	/*"root_mmc=root=/dev/mmcblk0p2 rootdelay=2\0"*/ \
-	/*"root_nfs=/mnt/nfs\0"*/ \
-	/*"set_root_nfs=setenv root_nfs root=/dev/nfs rw nfsroot=${serverip}:${root_nfs}\0"*/ \
         "netboot=run set_bootargs_nand; tftp ${fileaddr} ${serverip}:uImage; bootm\0" \
-	/*"ifconfig_static=run setenv ifconfig ip=${ipaddr}:${serverip}::${netmask}:mini2440:eth0\0"*/ \
-	/*"ifconfig_dhcp=run setenv ifconfig ip=dhcp\0"*/ \
-	/*"ifconfig=ip=dhcp\0"*/ \
-	/*"set_bootargs_mmc=setenv bootargs ${bootargs_base} ${bootargs_init} ${mini2440} ${root_mmc}\0"*/ \
 	"set_bootargs_nand=setenv bootargs ${bootargs_base} ${bootargs_init} ${ij3k2440} ${root_nand}\0" \
 	"vid_02=x:800,y:480,depth:16,pclk:1,hs:152,vs:3,up:29,lo:3,ri:40,le:40,hs:48,vmode:188,sync:2825\0" \
-	/*"set_bootargs_nfs=run set_root_nfs\; setenv bootargs ${bootargs_base} ${bootargs_init} ${mini2440} ${root_nfs} ${ifconfig}\0"*/ \
+	"autostart=n\0" \
+        "jffs2_dl=tftp rootfs.jffs2; nand erase.part root; nand write.jffs2 ${fileaddr} root ${filesize}\0" \
+        "kern_dl=tftp uImage; nand erase.part kernel; nand write.e ${fileaddr} kernel ${filesize}\0" \
 	""
 #endif	/* __CONFIG_H */

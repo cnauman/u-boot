@@ -257,7 +257,7 @@ int misc_init_r (void)
 	{
 		extern int do_auto_update(void);
 		/* this has priority over all else */
-                if (2 == (3 & con_override)) do_auto_update();
+                if (2 == con_override) do_auto_update();
 	}
 #endif
 	return (0);
@@ -275,12 +275,12 @@ int misc_init_r (void)
 
 #ifdef CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
 int overwrite_console (void) {
-    if (1 & (3 & con_override)) {
+    //if (1 == con_override) {
         if (0 == serial_assign(s3c24xx_serial1_device.name)) {
             blue_LED_on();
             serial_init();
         }
-    }
+    //}
     return con_override & 1; 
 }
 #endif
@@ -312,8 +312,8 @@ int do_vid(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]) {
 	        printf("lcdcon3: 0x%08x\n", lcd->lcdcon3);
         	printf("lcdcon4: 0x%08x\n", lcd->lcdcon4);
 	        printf("lcdcon5: 0x%08x\n", lcd->lcdcon5);
-            } else {
-                serial_assign(argv[1]);
+//            } else {
+//                serial_assign(argv[1]);
             }
         }
         return 0;
