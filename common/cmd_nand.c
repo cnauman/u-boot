@@ -369,8 +369,8 @@ static void nand_print_info(int idx)
 	printf("Device %d: ", idx);
 	if (chip->numchips > 1)
 		printf("%dx ", chip->numchips);
-	printf("%s, sector size %u KiB\n",
-	       nand->name, nand->erasesize >> 10);
+	printf("%s, size %u MiB, sector size %u KiB\n",
+	       nand->name, nand->size / (1024 * 1024), nand->erasesize >> 10);
 }
 
 int do_nand(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])

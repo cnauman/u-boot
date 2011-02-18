@@ -27,7 +27,8 @@
 # define TIMEOUT_COUNT	(CONFIG_NET_RETRY_COUNT)
 #endif
 
-#define PORT_BOOTPS	67		/* BOOTP server UDP port		*/
+//#define PORT_BOOTPS	67		/* BOOTP server UDP port		*/
+#define PORT_BOOTPS	6767		/* BOOTP server UDP port		*/
 #define PORT_BOOTPC	68		/* BOOTP client UDP port		*/
 
 #ifndef CONFIG_DHCP_MIN_EXT_LEN		/* minimal length of extension list	*/

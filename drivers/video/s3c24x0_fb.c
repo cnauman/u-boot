@@ -59,6 +59,7 @@ GraphicDevice smi;
 //#define VIDEO_MEM_SIZE	0xa0000	/* 480x640x16bit = 614400 bytes  rnd up*/
 
 extern void board_video_init(GraphicDevice *pGD);
+extern void board_pre_video_init(void);
 
 /*******************************************************************************
  *
@@ -80,6 +81,9 @@ void *video_hw_init (void)
 	printf("Video: ");
 
 	tmp = 0;
+#ifdef CONFIG_PRE_VIDEO_INIT
+        board_pre_video_init();
+#endif
 
 	videomode = CONFIG_SYS_DEFAULT_VIDEO_MODE;
 	/* get video mode via environment */
@@ -130,7 +134,7 @@ void *video_hw_init (void)
 	sprintf (pGD->modeIdent, "%dx%dx%d" /*"%ldkHz %ldHz"*/, res_mode->xres,
 		 res_mode->yres, bits_per_pixel/*, (hsynch / 1000),
 		 (vsynch / 1000)*/);
-	printf ("%s\n", pGD->modeIdent);
+	printf ("%s %s\n", pGD->modeIdent, penv);
 	pGD->winSizeX = res_mode->xres;
 	pGD->winSizeY = res_mode->yres;
 	pGD->plnSizeX = res_mode->xres;
