@@ -124,7 +124,7 @@
 //#define CONFIG_NETMASK          255.255.255.0
 //#define CONFIG_IPADDR		10.1.2.13
 //#define CONFIG_SERVERIP		10.1.2.5
-#define CONFIG_BOOTCOMMAND	"run chkMfg; run bootboard"
+#define CONFIG_BOOTCOMMAND	"run chkMfg; run chkNandEnv; run chkImg"
 
 #define CONFIG_DOS_PARTITION	1
 
@@ -282,13 +282,12 @@
 	CONFIG_MTDPARTS_DEFAULT "\0" \
 	"fileaddr=32000000\0" \
         "autostart=n\0" \
-	"bootboard=run chkNandEnv; run chkBoot\0" \
         "chkip=if test $ipaddr -ne \"\"; then print ipaddr; else bootp; fi\0" \
         "chksrvr=if test $srvrip -ne \"\"; then setenv serverip $srvrip; print serverip; fi\0" \
-        "chkscript=source ${fileaddr}\0" \
-	"netboot=run chkip; run chksrvr; run chkscript\0" \
-	"chkBoot=if test $set_bootargs -ne \"\"; then run chkImg; else echo Missing set_bootargs; fi\0" \
-	"chkImg=if nboot.e kernel; then bootm; else run netboot; fi\0" \
+	"netboot=run chkip; run chksrvr; source ${fileaddr}\0" \
+	"chkBoot=if test $set_bootargs -ne \"\"; then run bootImg; else echo Missing set_bootargs; fi\0" \
+	"bootImg=run set_bootargs; bootm\0" \
+	"chkImg=if nboot.e kernel; then run chkBoot; else run netboot; fi\0" \
 	"chkMfg=if iminfo 100000; then source 100000; fi\0" \
 	"chkNandEnv=if nand env.oob get; then echo Env OK; else nand env.oob set env; fi\0" \
 	"vid_02=x:800,y:480,depth:16,pclk:1,hs:152,vs:3,up:29,lo:3,ri:40,le:40,hs:48,vmode:188,sync:2825\0" \
