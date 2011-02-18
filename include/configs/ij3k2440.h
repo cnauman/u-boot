@@ -282,16 +282,17 @@
 	CONFIG_MTDPARTS_DEFAULT "\0" \
 	"fileaddr=32000000\0" \
         "autostart=n\0" \
-	"bootboard=run chkNandEnv; run chkVid; run chkBoot\0" \
+	"bootboard=run chkNandEnv; run chkBoot\0" \
         "chkip=if test $ipaddr -ne \"\"; then print ipaddr; else bootp; fi\0" \
         "chksrvr=if test $srvrip -ne \"\"; then setenv serverip $srvrip; print serverip; fi\0" \
         "chkscript=source ${fileaddr}\0" \
 	"netboot=run chkip; run chksrvr; run chkscript\0" \
-	"chkBoot=if nboot.e kernel; then bootm; else run netboot; fi\0" \
+	"chkBoot=if test $set_bootargs -ne \"\"; then run chkImg; else echo Missing set_bootargs; fi\0" \
+	"chkImg=if nboot.e kernel; then bootm; else run netboot; fi\0" \
 	"chkMfg=if iminfo 100000; then source 100000; fi\0" \
 	"chkNandEnv=if nand env.oob get; then echo Env OK; else nand env.oob set env; fi\0" \
-	"chkVid=if print videomode; then echo Video OK; else vid set; setenv stdout vga; setenv stderr vga; saveenv; reset; fi\0" \
 	"vid_02=x:800,y:480,depth:16,pclk:1,hs:152,vs:3,up:29,lo:3,ri:40,le:40,hs:48,vmode:188,sync:2825\0" \
-	"set_bootargs=setenv bootargs ${bootargs_base} ${bootargs_init} ${bootargs_other} ${bootargs_rootfs}\0" \
+	"stdout=vga\0" \
+	"stderr=vga\0" \
 	""
 #endif	/* __CONFIG_H */
