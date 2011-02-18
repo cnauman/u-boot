@@ -75,7 +75,6 @@ int board_early_init_f(void) {
 	return 0;
 }
 
-#define MACH_TYPE_MINI2440 1999
 int board_init (void)
 {
 	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
@@ -199,7 +198,7 @@ int board_init (void)
 	gpio->gpcdat |= ( 1 << 5) ; 
 
 	/* temporary arch number of IJ3K2440-Board */
-	gd->bd->bi_arch_number = MACH_TYPE_MINI2440;
+	gd->bd->bi_arch_number = MACH_TYPE_IJ3K_2440;
 
 	/* adress of boot parameters */
 	gd->bd->bi_boot_params = 0x30000100;
@@ -207,6 +206,7 @@ int board_init (void)
 	icache_enable();
 	dcache_enable();
 
+gd->flags |= GD_FLG_SILENT;
         /* set environ var for display type*/
 
 	return 0;
@@ -275,21 +275,22 @@ int misc_init_r (void)
 
 #ifdef CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
 int overwrite_console (void) {
-    //if (1 == con_override) {
+/*    if (1 == con_override) {
         if (0 == serial_assign(s3c24xx_serial1_device.name)) {
             blue_LED_on();
             serial_init();
         }
-    //}
-    return con_override & 1; 
+    }*/
+    gd->flags &= ~GD_FLG_SILENT; // undo the silent treatment
+    return (1 == con_override); 
 }
 #endif
 
-int     drv_video_init (void);
 int do_testcmd(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]) {
     if (1 < argc) {
         int flag = *argv[1] - '0';
-        if (flag) drv_video_init ();
+//        if (1 == flag) printf("ij_kbd_tst=%02x\n", ij_kbd_tstc());
+//        else if (2 == flag) printf("ij_kbd='%c'\n", ij_kbd_getc());
     }
     return 0;
 }
@@ -299,12 +300,16 @@ U_BOOT_CMD(
 	"simple test cmd", "Usage: tstcmd value"
 );
 
-int do_vid(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]) {
+void board_pre_video_init(void) {
         char buf[12];
+        sprintf(buf, "vid_%02x", display_id);
+        setenv("videomode", buf);
+}
+
+int do_vid(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]) {
         if (1 < argc) {
             if (0 == strcmp(argv[1], "set")) {
-                sprintf(buf, "vid_%02x", display_id);
-                setenv("videomode", buf);
+                board_pre_video_init();
             } else if (0 == strcmp(argv[1], "reg")) {
                 struct s3c24x0_lcd * const lcd = s3c24x0_get_base_lcd(); 
 	        printf("lcdcon1: 0x%08x\n", lcd->lcdcon1);
