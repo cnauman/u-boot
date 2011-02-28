@@ -60,7 +60,7 @@
 #define CONFIG_DM9000_BASE              0x20000300
 #define DM9000_IO                       (CONFIG_DM9000_BASE)
 #define DM9000_DATA                     (CONFIG_DM9000_BASE+4)
-#define CONFIG_NET_BOOTP_PORT	    6767
+#define CONFIG_NET_BOOTPS_PORT	    6767
 
 /*
  * select serial console configuration
