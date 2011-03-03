@@ -40,22 +40,33 @@ static int do_read_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * 
 }
 
 static int do_write_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
-	int offset,value;
+	int offset,value, sze=0, i;
+        char * pc, buf[5];
 
 	if (argc < 4)
 		return cmd_usage(cmdtp);
 
 	offset=simple_strtoul(argv[2],NULL,16);
-	value=simple_strtoul(argv[3],NULL,16);
-	if (offset > 0x40) {
+        buf[4] = 0;
+        pc = argv[3];
+        sze = strlen(pc) / 4;
+        for (i=0; i < sze; i++) {
+            buf[2] = *pc++;
+            buf[3] = *pc++;
+            buf[0] = *pc++;
+            buf[1] = *pc++;
+	    value = simple_strtoul(buf,NULL,16);
+	    if (offset > 0x40) {
 		printf("Wrong offset : 0x%x\n",offset);
 		return cmd_usage(cmdtp);
-	}
-	dm9000_write_srom_word(offset, value);
+	    }
+	    dm9000_write_srom_word(offset, value);
+            offset++;
+        }
 	return (0);
 }
 
-static int show_help() {
+/*static int show_help() {
     printf(
 	"\ndm9kee write <word offset> <value> \n"
 	"\tdm9kee read \n"
@@ -63,7 +74,7 @@ static int show_help() {
 	"\t\t\t03-07 : DM9000 Configuration\n"
 	"\t\t\t08-63 : User data");
     return 0;
-}
+}*/
 
 int do_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	if (argc < 2)
@@ -73,8 +84,8 @@ int do_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 		return (do_read_dm9000_eeprom(cmdtp,flag,argc,argv));
 	else if (strcmp (argv[1],"write") == 0)
 		return (do_write_dm9000_eeprom(cmdtp,flag,argc,argv));
-	else if (strcmp (argv[1],"write") == 0)
-		return (show_help());
+//	else if (strcmp (argv[1],"write") == 0)
+//		return (show_help());
 	else
 		return 0; //cmd_usage(cmdtp);
 }

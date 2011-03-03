@@ -100,6 +100,7 @@
 #define CONFIG_CMD_DATE
 //#define CONFIG_CMD_ELF
 #define CONFIG_CMD_FAT
+#define CONFIG_SUPPORT_VFAT
 #define CONFIG_CMD_JFFS2
 /* for ubi */
 #define CONFIG_CMD_UBIFS
@@ -282,14 +283,14 @@
 	CONFIG_MTDPARTS_DEFAULT "\0" \
 	"fileaddr=32000000\0" \
         "autostart=n\0" \
-        "chkip=if test $ipaddr -ne \"\"; then print ipaddr; else bootp; fi\0" \
-        "chksrvr=if test $srvrip -ne \"\"; then setenv serverip $srvrip; print serverip; fi\0" \
-	"netboot=run chkip; run chksrvr; source ${fileaddr}\0" \
-	"chkBoot=if test $set_bootargs -ne \"\"; then run bootImg; else echo Missing set_bootargs; fi\0" \
 	"bootImg=run set_bootargs; bootm\0" \
-	"chkImg=if nboot.e kernel; then run chkBoot; else run netboot; fi\0" \
-	"chkMfg=if iminfo 100000; then source 100000; fi\0" \
-	"chkNandEnv=if nand env.oob get; then echo Env OK; else nand env.oob set env; fi\0" \
+	"chkBoot=if test $set_bootargs -ne \"\"; then run bootImg; else echo No set_bootargs; run upgrade; fi\0" \
+	"chkImg=if test $btn -ne 2 && nboot.e kernel; then run chkBoot; else run upgrade; fi\0" \
+	"chkMfg=if imi 100000; then source 100000; fi\0" \
+	"chkNandEnv=if nand env.oob get; then ; else nand env.oob set env; fi\0" \
+        "chkip=if test $ipaddr -ne \"\" && test $serverip -ne \"\"; then print ipaddr; else bootp; fi\0" \
+	"upgrade=if run usbload; then ; else run chkip; fi; imxtract; source ${fileaddr}\0" \
+	"usbload=usb start; fatload usb 0 ${fileaddr} install.img\0" \
 	"vid_02=x:800,y:480,depth:16,pclk:1,hs:152,vs:3,up:29,lo:3,ri:40,le:40,hs:48,vmode:188,sync:2825\0" \
 	"stdout=vga\0" \
 	"stderr=vga\0" \
