@@ -30,6 +30,10 @@
 #include <asm/arch/s3c24x0_cpu.h>
 #include <video_fb.h>
 
+#ifdef CONFIG_SYS_HUSH_PARSER
+#include <hush.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 /* FCLK = 405 MHz, HCLK = 101 MHz, PCLK = 50 MHz, UCLK = 48 MHz */
@@ -253,13 +257,12 @@ int board_eth_init(bd_t *bis)
 
 int misc_init_r (void)
 {
-#ifdef CONFIG_AUTO_UPDATE
-	{
-		extern int do_auto_update(void);
-		/* this has priority over all else */
-                if (2 == con_override) do_auto_update();
-	}
-#endif
+	char buf[8];
+        sprintf(buf, "%01d", con_override);
+        setenv("btn", buf);
+	if (3 == con_override) {
+            set_default_env("## User requested reset to default environment\n");
+        }
 	return (0);
 }
 

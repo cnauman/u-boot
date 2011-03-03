@@ -58,7 +58,7 @@
  *		valid then run it. Update the EEPROM.
  */
 
-#undef AU_DEBUG
+#define AU_DEBUG
 
 #undef debug
 #ifdef	AU_DEBUG
@@ -83,6 +83,7 @@ struct flash_layout
 };
 
 /* layout of the FLASH. ST = start address, ND = end address. */
+#if 0
 #ifndef CONFIG_FLASH_8MB			/* 16 MB Flash, 32 MB RAM */
 #define AU_FL_FIRMWARE_ST	0x00000000
 #define AU_FL_FIRMWARE_ND	0x0009FFFF
@@ -134,6 +135,7 @@ struct eeprom_layout
 #define AU_EEPROM_TIME_POSTINST 124
 #define AU_EEPROM_SIZE_POSTINST 128
 #define AU_EEPROM_DCRC_POSTINST 132
+#endif
 
 static int au_usb_stor_curr_dev; /* current device */
 
@@ -146,13 +148,13 @@ static int au_usb_stor_curr_dev; /* current device */
 #define IDX_DISK	5
 #define IDX_POSTINST	6
 /* max. number of files which could interest us */
-#define AU_MAXFILES 7
+#define AU_MAXFILES 1
 /* pointers to file names */
 char *aufile[AU_MAXFILES];
 /* sizes of flash areas for each file */
 long ausize[AU_MAXFILES];
 /* offsets into the EEEPROM */
-struct eeprom_layout auee_off[AU_MAXFILES] = { \
+/*struct eeprom_layout auee_off[AU_MAXFILES] = { \
 	{0}, \
 	{AU_EEPROM_TIME_PREINST, AU_EEPROM_SIZE_PREINST, AU_EEPROM_DCRC_PREINST,}, \
 	{AU_EEPROM_TIME_FIRMWARE, AU_EEPROM_SIZE_FIRMWARE, AU_EEPROM_DCRC_FIRMWARE,}, \
@@ -160,14 +162,14 @@ struct eeprom_layout auee_off[AU_MAXFILES] = { \
 	{AU_EEPROM_TIME_APP, AU_EEPROM_SIZE_APP, AU_EEPROM_DCRC_APP,}, \
 	{AU_EEPROM_TIME_DISK, AU_EEPROM_SIZE_DISK, AU_EEPROM_DCRC_DISK,}, \
 	{AU_EEPROM_TIME_POSTINST, AU_EEPROM_SIZE_POSTINST, AU_EEPROM_DCRC_POSTINST,} \
-	};
+	};*/
 /* array of flash areas start and end addresses */
-struct flash_layout aufl_layout[AU_MAXFILES - 3] = { \
+/*struct flash_layout aufl_layout[AU_MAXFILES - 3] = { \
 	{AU_FL_FIRMWARE_ST, AU_FL_FIRMWARE_ND,}, \
 	{AU_FL_KERNEL_ST, AU_FL_KERNEL_ND,}, \
 	{AU_FL_APP_ST, AU_FL_APP_ND,}, \
 	{AU_FL_DISK_ST, AU_FL_DISK_ND,}, \
-};
+};*/
 /* convert the index into aufile[] to an index into aufl_layout[] */
 #define FIDX_TO_LIDX(idx) ((idx) - 2)
 
@@ -223,8 +225,8 @@ int
 au_check_header_valid(int idx, long nbytes)
 {
 	image_header_t *hdr;
-	unsigned long checksum;
-	unsigned char buf[4];
+//	unsigned long checksum;
+//	unsigned char buf[4];
 
 	hdr = (image_header_t *)LOAD_ADDR;
 #if defined(CONFIG_FIT)
@@ -255,6 +257,12 @@ au_check_header_valid(int idx, long nbytes)
 		printf ("Image %s bad header checksum\n", aufile[idx]);
 		return -1;
 	}
+        if (!image_check_type(hdr, IH_TYPE_MULTI) &&
+                !image_check_type(hdr, IH_TYPE_SCRIPT)) {
+	    printf ("Image %s wrong type\n", aufile[idx]);
+            return -1;
+        }
+#if 0
 	/* check the type - could do this all in one gigantic if() */
 	if ((idx == IDX_FIRMWARE) &&
 		!image_check_type (hdr, IH_TYPE_FIRMWARE)) {
@@ -307,6 +315,7 @@ au_check_header_valid(int idx, long nbytes)
 		printf ("Image %s is too old\n", aufile[idx]);
 //		return -1;
 	}
+#endif
 
 	return 0;
 }
@@ -320,9 +329,9 @@ au_do_update(int idx, long sz)
 {
 	image_header_t *hdr;
 	char *addr;
-	long start, end;
-	int off, rc;
-	uint nbytes;
+//	long start, end;
+//	int off, rc;
+//	uint nbytes;
 
 	hdr = (image_header_t *)LOAD_ADDR;
 #if defined(CONFIG_FIT)
@@ -345,7 +354,7 @@ au_do_update(int idx, long sz)
 		parse_string_outer(addr, FLAG_PARSE_SEMICOLON);
 		return 0;
 	}
-
+#if 0
 	start = aufl_layout[FIDX_TO_LIDX(idx)].start;
 	end = aufl_layout[FIDX_TO_LIDX(idx)].end;
 
@@ -403,6 +412,7 @@ au_do_update(int idx, long sz)
 	/* this assumes that ONLY the firmware is protected! */
 	if (idx == IDX_FIRMWARE)
 		flash_sect_protect(1, start, end);
+#endif
 	return 0;
 }
 #if 0
@@ -521,7 +531,7 @@ do_auto_update(void)
 	 * now check whether start and end are defined using environment
 	 * variables.
 	 */
-	start = -1;
+/*	start = -1;
 	end = 0;
 	env = getenv("firmware_st");
 	if (env != NULL)
@@ -572,7 +582,7 @@ do_auto_update(void)
 		ausize[IDX_DISK] = (end + 1) - start;
 		aufl_layout[3].start = start;
 		aufl_layout[3].end = end;
-	}
+	}*/
 	/* make certain that HUSH is runnable */
 	u_boot_hush_start();
 	/* make sure that we see CTRL-C and save the old state */
@@ -604,7 +614,7 @@ do_auto_update(void)
 			debug ("%s checksum not valid\n", aufile[i]);
 			continue;
 		}
-#ifdef CONFIG_VFD
+#if 0 //def CONFIG_VFD
 		/* now that we have a valid file we can display the */
 		/* bitmap. */
 		if (bitmap_first == 0) {
