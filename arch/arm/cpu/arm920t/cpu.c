@@ -52,9 +52,9 @@ int cleanup_before_linux (void)
 
 	/* turn off I/D-cache */
 	icache_disable();
-	dcache_disable();
+//	dcache_disable();
 	/* flush I/D-cache */
-	cache_flush();
+//	cache_flush();
 
 	return 0;
 }

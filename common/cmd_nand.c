@@ -330,7 +330,7 @@ int do_nand_env_oob(cmd_tbl_t *cmdtp, int argc, char *const argv[])
 		ops.oobbuf = (void *) oob_buf;
 
 		oob_buf[0] = ENV_OOB_MARKER;
-		oob_buf[1] = addr / nand->erasesize;
+		oob_buf[1] = (uint32_t)addr / nand->erasesize;
 
 		ret = nand->write_oob(nand, ENV_OFFSET_SIZE, &ops);
 		if (ret) {
@@ -369,8 +369,8 @@ static void nand_print_info(int idx)
 	printf("Device %d: ", idx);
 	if (chip->numchips > 1)
 		printf("%dx ", chip->numchips);
-	printf("%s, sector size %u KiB\n",
-	       nand->name, nand->erasesize >> 10);
+	printf("%s, size %u MiB, sector size %u KiB\n",
+	       nand->name, nand->size / (1024 * 1024), nand->erasesize >> 10);
 }
 
 int do_nand(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])

@@ -457,7 +457,7 @@ void board_init_r (gd_t *id, ulong dest_addr)
 #if !defined(CONFIG_SYS_NO_FLASH)
 	ulong flash_size;
 #endif
-
+timer_init();
 	gd = id;
 	bd = gd->bd;
 
