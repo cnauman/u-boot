@@ -7,7 +7,7 @@
  * (C) Copyright 2009
  * Frederik Kriewitz <frederik@kriewitz.eu>
  *
- * Configuration settings for the DevKit8000 board.
+ * Configuration settings for the ij3k-omap board.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -85,6 +85,7 @@
 #undef	CONFIG_DM9000_DEBUG
 
 /* my additions */
+#define CONFIG_NET_BOOTPS_PORT           6767
 #define CONFIG_CMD_PING
 #define CONFIG_MTD_PARTITIONS
 #define CONFIG_CMD_UBIFS
@@ -93,20 +94,27 @@
 #define CONFIG_LZO
 #define CONFIG_CMDLINE_EDITING
 
+#define CONFIG_BOOTDELAY	0
+#define CONFIG_AUTOBOOT_STOP_STR "v"
+#define CONFIG_ZERO_BOOTDELAY_CHECK
+#define CONFIG_AUTOBOOT_KEYED
+
 /* USB */
 //#define CONFIG_MUSB_UDC			1
-//#define CONFIG_USB_OMAP3		1
-//#define CONFIG_TWL4030_USB		1
+//#define CONFIG_MUSB_HCD                 1
+#define CONFIG_USB_OMAP3		1
+#define CONFIG_TWL4030_USB		1
 
 /* USB device configuration */
 //#define CONFIG_USB_DEVICE		1
 //#define CONFIG_USB_TTY			1
-//#define CONFIG_SYS_CONSOLE_IS_IN_ENV	1
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV	1
 
 /* USB EHCI */
-//#define CONFIG_CMD_USB
-//#define CONFIG_USB_EHCI
-//#define CONFIG_SYS_USB_EHCI_MAX_ROOT_PORTS 3
+#define CONFIG_CMD_USB
+#define CONFIG_USB_EHCI
+#define CONFIG_SYS_USB_EHCI_MAX_ROOT_PORTS 3
+#define CONFIG_USB_STORAGE
 
 /* End of my additions */
 
@@ -203,52 +211,51 @@
 /* Environment information */
 #define CONFIG_ENV_OVERWRITE /* allow to overwrite serial and ethaddr */
 
-#define CONFIG_BOOTDELAY		3
-
-#define CONFIG_EXTRA_ENV_SETTINGS \
-	"loadaddr=0x82000000\0" \
-	"console=ttyO2,115200n8\0" \
-	"vram=12M\0" \
-	"serverip=10.1.2.5\0" \
-	"ipaddr=10.1.2.13\0" \
-	"video=omapfb.mode=dvi:1024x768MR-16@60 " \
-                "video=omapfb:mode:7inch_LCD " \
-		"omapdss.def_disp=dvi\0" \
-	/*"nfsopts=hard,tcp,rsize=65536,wsize=65536\0"*/ \
-	"nandrootfs=ubi.mtd=4 root=ubi0:rootfs rootfstype=ubifs\0" \
+/*#define MMC_ENV_VARS \
+	"mmcdev=1\0" \
+	"loadbootenv=fatload mmc ${mmcdev} ${loadaddr} uEnv.txt\0" \
+	"importbootenv=echo Importing environment from mmc ...; " \
+		"env import -t $loadaddr $filesize\0" \
+	"loaduimage=fatload mmc 0 ${loadaddr} uImage\0" \
 	"mmcrootfs=root=/dev/mmcblk0p2\0" \
-	"commonargs=" \
-		"setenv bootargs console=${console} " \
-		"vram=${vram} ${video}\0" \
 	"mmcargs=" \
 		"run commonargs; " \
 		"setenv bootargs ${bootargs} " \
 		"${mmcrootfs} " \
 		"${kernelopts}\0" \
-	"nandargs=" \
-		"run commonargs; " \
-		"setenv bootargs ${bootargs} " \
-		"${nandrootfs} " \
-		"${kernelopts}; print bootargs\0" \
-        "mtdparts=" MTDPARTS_DEFAULT "\0" \
-        "mtdids=" MTDIDS_DEFAULT "\0" \
-	/*"netargs=" \
-		"run commonargs; " \
-		"setenv bootargs ${bootargs} " \
-		"root=/dev/nfs " \
-		"nfsroot=${serverip}:${rootpath},${nfsopts} " \
-		"ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}:${hostname}::off " \
-		"${kernelopts} " \
-		"dnsip1=${dnsip} " \
-		"dnsip2=${dnsip2}\0"*/ \
-	"loadbootscript=fatload mmc 0 ${loadaddr} boot.scr\0" \
-	"bootscript=echo Running bootscript from mmc ...; " \
-		"source ${loadaddr}\0" \
-	"loaduimage=fatload mmc 0 ${loadaddr} uImage\0" \
-	/*"eraseenv=nand unlock 0x260000 0x20000; nand erase 0x260000 0x20000\0"*/ \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
-		"bootm ${loadaddr}\0" \
+		"bootm ${loadaddr}\0"
+#define MMC_CHECKBOOT \
+                "if mmc init ${mmcdev}; then " \
+			"if run loadbootenv; then " \
+			    "run importbootenv; " \
+			"fi;" \
+			"if test -n $uenvcmd; then " \
+			    "run uenvcmd; " \
+			"fi;" \
+			"if run loaduimage; then " \
+			    "run mmcboot; " \
+			"fi;" \
+		"fi;"*/
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"loadaddr=0x82000000\0" \
+        "autostart=n\0" \
+	"console=console=ttyO2,115200n8\0" \
+	"video=vram=12M omapfb.mode=lcd:800x480 " \
+		"omapdss.def_disp=lcd\0" \
+                /*"video=omapfb:mode:7inch_LCD\0"*/ \
+	/*"nfsopts=hard,tcp,rsize=65536,wsize=65536\0"*/ \
+	"nandrootfs=ubi.mtd=4 root=ubi0:rootfs rootfstype=ubifs\0" \
+	"nandargs=" \
+		"setenv bootargs " \
+                "${console} " \
+                "${video} " \
+		"${nandrootfs} " \
+		"${kernelopts}\0" \
+        "mtdparts=" MTDPARTS_DEFAULT "\0" \
+        "mtdids=" MTDIDS_DEFAULT "\0" \
 	"nandboot=echo Booting from nand ...; " \
 		"run nandargs; " \
 		"nand read ${loadaddr} 280000 400000; " \
@@ -257,20 +264,10 @@
 		"dhcp ${loadaddr}; " \
 		"run netargs; " \
 		"bootm ${loadaddr}\0"*/ \
-        "nboot=tftp uImage; run nandargs; bootm ${loadaddr}\0" \
-	"autoboot=if mmc init 0; then " \
-			"if run loadbootscript; then " \
-				"run bootscript; " \
-			"else " \
-				"if run loaduimage; then " \
-					"run mmcboot; " \
-				"else run nandboot; " \
-				"fi; " \
-			"fi; " \
-		"else run nandboot; fi\0"
+        /*"nboot=tftp uImage; run nandargs; bootm ${loadaddr}\0" */
 
 
-#define CONFIG_BOOTCOMMAND "run autoboot"
+#define CONFIG_BOOTCOMMAND "run nandboot"
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
