@@ -39,6 +39,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/mem.h>
 #include <asm/mach-types.h>
+#include <mmc.h>
 #ifdef CONFIG_USB_EHCI
 #include <usb.h>
 #include <asm/arch/clocks.h>
@@ -83,8 +84,27 @@ u32 get_sysboot_value(void)
 {
 	static struct ctrl *ctrl_base = (struct ctrl *)OMAP34XX_CTRL_BASE;
         int mode;
-        mode = (readl(&ctrl_base->status) >> 6) & 1;
+        mode = (readl(&ctrl_base->status) >> 5) & 1;
         return mode;
+}
+
+void CheckMMC(void) {
+    int dev = 1;
+    if (get_sysboot_value()) {
+        set_default_env("## Resetting to the default environ\n");
+	setenv("mmcdev", "1");
+	setenv("loadbootenv", "fatload mmc ${mmcdev} ${loadaddr} uEnv.txt");
+	setenv("importbootenv", "echo Importing environment from mmc ...; " \
+		"env import -t $loadaddr $filesize");
+        setenv("bootcmd", "if mmc init ${mmcdev}; then " \
+			      "if run loadbootenv; then " \
+			          "run importbootenv; " \
+			      "fi;" \
+                              "if test -n $uenvcmd; then " \
+			          "run uenvcmd; " \
+		              "fi;" \
+                          "fi;");
+    }
 }
 
 /*
@@ -130,10 +150,8 @@ int misc_init_r(void)
 #endif
 
 	dieid_num_r();
-        if (get_sysboot_value()) {
-            set_default_env("## Resetting to the default environ\n");
-            // TODO: set up mmc stuff
-        }
+
+        CheckMMC();
 	return 0;
 }
 

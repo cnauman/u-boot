@@ -156,7 +156,7 @@
 #define MTDPARTS_DEFAULT		"mtdparts=nand:" \
 						"512k(x-loader)," \
 						"1920k(u-boot)," \
-						"128k(u-boot-env)," \
+						"128k(env)," \
 						"4m(kernel)," \
 						"-(fs)"
 
@@ -264,7 +264,8 @@
 		"dhcp ${loadaddr}; " \
 		"run netargs; " \
 		"bootm ${loadaddr}\0"*/ \
-        /*"nboot=tftp uImage; run nandargs; bootm ${loadaddr}\0" */
+        "write_img=nand erase.part ${name}; nand write.i ${loadaddr} ${name} ${filesize}\0" \
+        "netboot=tftp uImage; run nandargs; bootm ${loadaddr}\0"
 
 
 #define CONFIG_BOOTCOMMAND "run nandboot"
