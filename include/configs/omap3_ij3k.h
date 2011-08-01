@@ -108,14 +108,26 @@
 /* USB device configuration */
 //#define CONFIG_USB_DEVICE		1
 //#define CONFIG_USB_TTY			1
-#define CONFIG_SYS_CONSOLE_IS_IN_ENV	1
 
 /* USB EHCI */
-#define CONFIG_CMD_USB
-#define CONFIG_USB_EHCI
+//#define CONFIG_CMD_USB
+//#define CONFIG_USB_EHCI
 #define CONFIG_SYS_USB_EHCI_MAX_ROOT_PORTS 3
 #define CONFIG_USB_STORAGE
 
+/* video settings */
+#define CONFIG_VIDEO
+#define CONFIG_CFB_CONSOLE
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+#define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
+#define CONFIG_VGA_AS_SINGLE_DEVICE
+#define CONFIG_SILENT_CONSOLE
+
+#define CONFIG_VIDEO_SW_CURSOR
+#define VIDEO_FB_16BPP_WORD_SWAP
+#define CONFIG_VIDEO_OMAP3
+#define LCD_VIDEO_ADDR           0x81000000
+#define CONFIG_SYS_DEFAULT_VIDEO_MODE 0x311
 /* End of my additions */
 
 /* NS16550 Configuration */
