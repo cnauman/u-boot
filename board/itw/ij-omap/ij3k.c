@@ -41,6 +41,8 @@
 #include <asm/mach-types.h>
 #include <mmc.h>
 #include <asm/arch/omapdss.h>
+#include <environment.h>
+#include <asm/arch/gpio.h>
 
 #include "ij3k.h"
 
@@ -169,6 +171,31 @@ struct omap_panel lcd =
 	.fb_address2 = LCD_VIDEO_ADDR, //0x805CB000,
 };
 
+void vidmem_clear(void) {
+    int i, sze = lcd.logo_width * lcd.logo_height * sizeof(short);
+    for (i=0; i < sze; i+=2) {
+        *((unsigned short*)(lcd.fb_address1 + i)) = 0x0000;
+    }
+}
+
+void init_smps(void) {
+#define SMARTREFLEX_ENABLE     (1<<3)
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, SMARTREFLEX_ENABLE, 
+            TWL4030_PM_MASTER_DCDC_GLOBAL_CFG);
+
+    *((uint *) 0x4830722c) = 0x30201e00;
+    *((uint *) 0x48307234) = 0x00120000;
+    *((uint *) 0x48307238) = 0x00000008;
+    *((uint *) 0x48307298) = 0x000000ff;
+    *((uint *) 0x48307294) = 0x000000ff;
+    *((uint *) 0x483072a0) = 0x000000ff;
+    *((uint *) 0x48307220) = 0x00120012;
+    *((uint *) 0x48307224) = 0x00010000;
+    *((uint *) 0x48307290) = 0x0fff0fff;
+    *((uint *) 0x48307230) = 0x2c000000;
+    *((uint *) 0x483072d0) = 0x00002c06;
+}
+
 /*
  * Routine: misc_init_r
  * Description: Configure board specific parts
@@ -185,6 +212,16 @@ int misc_init_r(void)
 #ifdef CONFIG_TWL4030_LED
 	twl4030_led_init(/*TWL4030_LED_LEDEN_LEDAON |*/ TWL4030_LED_LEDEN_LEDBON);
 #endif
+        init_smps();
+/*
+ * Configure DSS to display background color on DVID
+ * Configure VENC to display color bar on S-Video
+ */
+	lcd.logo_width = 800; //width;
+	lcd.logo_height = 480; //height;
+        omapdss_init(&lcd);
+	//omap3_dss_venc_config(&venc_config_std_tv, VENC_HEIGHT, VENC_WIDTH);
+//	omap3_dss_panel_config(&lcd_cfg_ij);
 
 #ifdef CONFIG_DRIVER_DM9000
 	/* Configure GPMC registers for DM9000 */
@@ -214,7 +251,8 @@ int misc_init_r(void)
 	dieid_num_r();
 
         CheckMMC();
-//	omap3_dss_enable();
+        vidmem_clear();
+	omap3_dss_enable();
 	return 0;
 }
 
@@ -246,9 +284,13 @@ int do_tst(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]) {
         if (1 < argc) {
             if (0 == strcmp(argv[1], "set")) {
 //                board_pre_video_init();
-                go_omap3_dss_enable(1);
-            } else if (0 == strcmp(argv[1], "i2c")) {
-                i2c_init_r();
+                go_omap3_dss_enable(1); //*argv[2] - '0');
+            } else if (0 == strcmp(argv[1], "down")) {
+                writel(0, 0x48050440); // dispc->control
+            } else if (0 == strcmp(argv[1], "smps")) {
+                init_smps();
+            } else if (0 == strcmp(argv[1], "clear")) {
+                vidmem_clear();
             } else if (0 == strcmp(argv[1], "reg")) {
 #define SHOWREG(a, b) { \
     printf("%8s:(0x%08x)0x%08x\n", a, b,  \
@@ -289,7 +331,7 @@ int do_tst(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]) {
 }
 U_BOOT_CMD(
         tst, 2, 1, do_tst,
-        "test stuff", "Usage: tst reg|set|i2c"
+        "test stuff", "Usage: tst reg|set|clear|smps|down"
 );
 
 //#ifdef CONFIG_DRIVER_OMAPDSS
