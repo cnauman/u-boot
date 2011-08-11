@@ -98,22 +98,21 @@
 #define CONFIG_AUTOBOOT_STOP_STR "v"
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 #define CONFIG_AUTOBOOT_KEYED
-
+#define CONFIG_SYS_DCACHE_OFF
 /* USB */
+#define CONFIG_CMD_USB
+
+#ifdef CONFIG_CMD_USB
 //#define CONFIG_MUSB_UDC			1
 #define CONFIG_MUSB_HCD                 1
 #define CONFIG_USB_OMAP3		1
 #define CONFIG_TWL4030_USB		1
 
-/* USB device configuration */
-//#define CONFIG_USB_DEVICE		1
-//#define CONFIG_USB_TTY			1
-
 /* USB EHCI */
-#define CONFIG_CMD_USB
 //#define CONFIG_USB_EHCI
 #define CONFIG_SYS_USB_EHCI_MAX_ROOT_PORTS 3
 #define CONFIG_USB_STORAGE
+#endif
 
 /* video settings */
 #define CONFIG_VIDEO
@@ -277,7 +276,7 @@
 		"run netargs; " \
 		"bootm ${loadaddr}\0"*/ \
         "write_img=nand erase.part ${name}; nand write.i ${loadaddr} ${name} ${filesize}\0" \
-        "netboot=tftp uImage; run nandargs; bootm ${loadaddr}\0"
+        "netboot=if tftp uImage; then run nandargs; bootm ${loadaddr}; fi\0"
 
 
 #define CONFIG_BOOTCOMMAND "run nandboot"
