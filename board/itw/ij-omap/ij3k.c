@@ -41,16 +41,6 @@
 #include <asm/mach-types.h>
 #include <mmc.h>
 #include <asm/arch/omapdss.h>
-#ifdef CONFIG_USB_EHCI
-#include <usb.h>
-#include <asm/arch/clocks.h>
-#include <asm/arch/clocks_omap3.h>
-#include <asm/arch/ehci_omap3.h>
-#include <asm/arch/cpu.h>
-/* from drivers/usb/host/ehci-core.h */
-extern struct ehci_hccr *hccr;
-extern volatile struct ehci_hcor *hcor;
-#endif
 
 #include "ij3k.h"
 
@@ -90,7 +80,6 @@ u32 get_sysboot_value(void)
 }
 static int con_override = 0;
 void CheckMMC(void) {
-    int dev = 1;
     if (get_sysboot_value()) {
         set_default_env("## Resetting to the default environ\n");
 	setenv("mmcdev", "1");
@@ -125,7 +114,6 @@ int overwrite_console (void) {
 
 void i2c_init_r(void) {
 	unsigned char byte;
-	int i;
 #ifdef CONFIG_DRIVER_OMAP34XX_I2C
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 #endif
@@ -149,6 +137,37 @@ void i2c_init_r(void) {
         *((uint *) 0x49058094) = 0x00000506;
         *((uint *) 0x49056094) = 0xF060F000;
 }
+
+struct omap_panel lcd =
+{	/* Sharp LQ043T1DG01 4.3" Display */
+	.acbi = 0,
+	.acb = 0,
+	.is_tft = 1,
+	.config = OMAP_DSS_LCD_TFT | OMAP_DSS_LCD_IVS | OMAP_DSS_LCD_IHS /*| OMAP_DSS_LCD_IEO*/,
+	.timings = {
+		.x_res = 800, //480,
+		.y_res = 480, //272,
+
+		.pixel_clock	= 16500, //9000,
+
+		.hsw		= 128, //42,
+		.hfp		= 10, //3,
+		.hbp		= 10, //2,
+
+		/* Note: The vertical timings were copied from the Linux sources,
+		 *	but they appear to be incorrect.  The first line of data
+		 *	is not shown on the display.  Maybe I have a newer LCD?
+		 */
+		.vsw		= 2, //11,
+		.vfp		= 4, //3,
+		.vbp		= 11, //2,
+	},
+
+	.data_lines = 16,
+
+	.fb_address1 = LCD_VIDEO_ADDR, //0x805CB000,
+	.fb_address2 = LCD_VIDEO_ADDR, //0x805CB000,
+};
 
 /*
  * Routine: misc_init_r
@@ -179,23 +198,23 @@ int misc_init_r(void)
 
 	/* Use OMAP DIE_ID as MAC address */
         // TODO: use eeprom instead
-	if (!eth_getenv_enetaddr("ethaddr", enetaddr)) {
-		printf("ethaddr not set, using Die ID\n");
+//	if (!eth_getenv_enetaddr("ethaddr", enetaddr)) {
+//		printf("ethaddr not set, using Die ID\n");
 		die_id_0 = readl(&id_base->die_id_0);
-		enetaddr[0] = 0x02; /* locally administered */
-		enetaddr[1] = readl(&id_base->die_id_1) & 0xff;
-		enetaddr[2] = (die_id_0 & 0xff000000) >> 24;
+		enetaddr[0] = 0x00; /* locally administered */
+		enetaddr[1] = 0x06; //readl(&id_base->die_id_1) & 0xff;
+		enetaddr[2] = 0xb3; //(die_id_0 & 0xff000000) >> 24;
 		enetaddr[3] = (die_id_0 & 0x00ff0000) >> 16;
 		enetaddr[4] = (die_id_0 & 0x0000ff00) >> 8;
 		enetaddr[5] = (die_id_0 & 0x000000ff);
 		eth_setenv_enetaddr("ethaddr", enetaddr);
-	}
+//	}
 #endif
 
 	dieid_num_r();
 
         CheckMMC();
-//        omap3_dss_enable();
+//	omap3_dss_enable();
 	return 0;
 }
 
@@ -221,111 +240,15 @@ int board_eth_init(bd_t *bis)
 }
 #endif
 
-#ifdef CONFIG_USB_EHCI
-
-#define GPIO_PHY_RESET 147
-
-/* Reset is needed otherwise the kernel-driver will throw an error. */
-int ehci_hcd_stop(void)
-{
-	pr_debug("Resetting OMAP3 EHCI\n");
-	omap_set_gpio_dataout(GPIO_PHY_RESET, 0);
-	writel(OMAP_UHH_SYSCONFIG_SOFTRESET, OMAP3_UHH_BASE + OMAP_UHH_SYSCONFIG);
-	return 0;
-}
-
-/* Call usb_stop() before starting the kernel */
-void show_boot_progress(int val)
-{
-	if(val == 15)
-		usb_stop();
-}
-
-/*
- * Initialize the OMAP3 EHCI controller and PHY on the BeagleBoard.
- * Based on "drivers/usb/host/ehci-omap.c" from Linux 2.6.37.
- * See there for additional Copyrights.
- */
-int ehci_hcd_init(void)
-{
-	pr_debug("Initializing OMAP3 ECHI\n");
-
-	/* Put the PHY in RESET */
-	omap_request_gpio(GPIO_PHY_RESET);
-	omap_set_gpio_direction(GPIO_PHY_RESET, 0);
-	omap_set_gpio_dataout(GPIO_PHY_RESET, 0);
-
-	/* Hold the PHY in RESET for enough time till DIR is high */
-	/* Refer: ISSUE1 */
-	udelay(10);
-
-	struct prcm *prcm_base = (struct prcm *)PRCM_BASE;
-	/* Enable USBHOST_L3_ICLK (USBHOST_MICLK) */
-	sr32(&prcm_base->iclken_usbhost, 0, 1, 1);
-	/*
-	 * Enable USBHOST_48M_FCLK (USBHOST_FCLK1)
-	 * and USBHOST_120M_FCLK (USBHOST_FCLK2)
-	 */
-	sr32(&prcm_base->fclken_usbhost, 0, 2, 3);
-	/* Enable USBTTL_ICLK */
-	sr32(&prcm_base->iclken3_core, 2, 1, 1);
-	/* Enable USBTTL_FCLK */
-	sr32(&prcm_base->fclken3_core, 2, 1, 1);
-	pr_debug("USB clocks enabled\n");
-
-	/* perform TLL soft reset, and wait until reset is complete */
-	writel(OMAP_USBTLL_SYSCONFIG_SOFTRESET,
-		OMAP3_USBTLL_BASE + OMAP_USBTLL_SYSCONFIG);
-	/* Wait for TLL reset to complete */
-	while (!(readl(OMAP3_USBTLL_BASE + OMAP_USBTLL_SYSSTATUS)
-			& OMAP_USBTLL_SYSSTATUS_RESETDONE));
-	pr_debug("TLL reset done\n");
-
-	writel(OMAP_USBTLL_SYSCONFIG_ENAWAKEUP |
-		OMAP_USBTLL_SYSCONFIG_SIDLEMODE |
-		OMAP_USBTLL_SYSCONFIG_CACTIVITY,
-		OMAP3_USBTLL_BASE + OMAP_USBTLL_SYSCONFIG);
-
-	/* Put UHH in NoIdle/NoStandby mode */
-	writel(OMAP_UHH_SYSCONFIG_ENAWAKEUP
-		| OMAP_UHH_SYSCONFIG_SIDLEMODE
-		| OMAP_UHH_SYSCONFIG_CACTIVITY
-		| OMAP_UHH_SYSCONFIG_MIDLEMODE,
-		OMAP3_UHH_BASE + OMAP_UHH_SYSCONFIG);
-
-	/* setup burst configurations */
-	writel(OMAP_UHH_HOSTCONFIG_INCR4_BURST_EN
-		| OMAP_UHH_HOSTCONFIG_INCR8_BURST_EN
-		| OMAP_UHH_HOSTCONFIG_INCR16_BURST_EN,
-		OMAP3_UHH_BASE + OMAP_UHH_HOSTCONFIG);
-
-	/*
-	 * Refer ISSUE1:
-	 * Hold the PHY in RESET for enough time till
-	 * PHY is settled and ready
-	 */
-	udelay(10);
-	omap_set_gpio_dataout(GPIO_PHY_RESET, 1);
-
-	hccr = (struct ehci_hccr *)(OMAP3_EHCI_BASE);
-	hcor = (struct ehci_hcor *)(OMAP3_EHCI_BASE + 0x10);
-
-	pr_debug("OMAP3 EHCI init done\n");
-	return 0;
-}
-
-#endif /* CONFIG_USB_EHCI */
 extern void dumpregs(void);
 void go_omap3_dss_enable(int x);
 int do_tst(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]) {
         if (1 < argc) {
             if (0 == strcmp(argv[1], "set")) {
 //                board_pre_video_init();
-    go_omap3_dss_enable(1);
+                go_omap3_dss_enable(1);
             } else if (0 == strcmp(argv[1], "i2c")) {
                 i2c_init_r();
-            } else if (0 == strcmp(argv[1], "blah")) {
-    go_omap3_dss_enable(2);
             } else if (0 == strcmp(argv[1], "reg")) {
 #define SHOWREG(a, b) { \
     printf("%8s:(0x%08x)0x%08x\n", a, b,  \
@@ -366,49 +289,19 @@ int do_tst(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]) {
 }
 U_BOOT_CMD(
         tst, 2, 1, do_tst,
-        "set the videomode variable", "Usage: tst reg|set|i2c"
+        "test stuff", "Usage: tst reg|set|i2c"
 );
 
 //#ifdef CONFIG_DRIVER_OMAPDSS
 //#ifdef CONFIG_DISPLAY_SHARP_LQ043T1DG01
 //#include "logos/logo_480x272.h"
-struct omap_panel lcd =
-{	/* Sharp LQ043T1DG01 4.3" Display */
-	.acbi = 0,
-	.acb = 0,
-	.is_tft = 1,
-	.config = OMAP_DSS_LCD_TFT | OMAP_DSS_LCD_IVS | OMAP_DSS_LCD_IHS /*| OMAP_DSS_LCD_IEO*/,
-	.timings = {
-		.x_res = 800, //480,
-		.y_res = 480, //272,
 
-		.pixel_clock	= 16500, //9000,
-
-		.hsw		= 128, //42,
-		.hfp		= 10, //3,
-		.hbp		= 10, //2,
-
-		/* Note: The vertical timings were copied from the Linux sources,
-		 *	but they appear to be incorrect.  The first line of data
-		 *	is not shown on the display.  Maybe I have a newer LCD?
-		 */
-		.vsw		= 2, //11,
-		.vfp		= 4, //3,
-		.vbp		= 11, //2,
-	},
-
-	.data_lines = 16,
-
-	.fb_address1 = LCD_VIDEO_ADDR, //0x805CB000,
-	.fb_address2 = LCD_VIDEO_ADDR, //0x805CB000,
-};
 //#endif
-void omapdss_init_alt(struct omap_panel *lcd);
+
+//void omapdss_init_alt(struct omap_panel *lcd);
 void go_omap3_dss_enable(int x) {
 	/* Setup LCD to display included Splash header */
 //	lcd.logo = header_data;
-	lcd.logo_width = 800; //width;
-	lcd.logo_height = 480; //height;
 
 	/* Request and Activate Backlight Power Supply */
 //	omap_request_gpio(182);
@@ -426,8 +319,8 @@ void go_omap3_dss_enable(int x) {
 	omap_set_gpio_dataout(176,1);
 
 	/* Initialize the Display System */
-        if (1==x) omapdss_init(&lcd);
-        else if (2==x) omapdss_init_alt(&lcd);
+        /*if (1==x)*/ omapdss_init(&lcd);
+        //else if (2==x) omapdss_init_alt(&lcd);
 
 	/* Activate the Backlight PWM Pin */
 //	omap_set_gpio_dataout(181,1);

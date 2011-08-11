@@ -1,4 +1,3 @@
-#if 1
 /*
  * (C) Copyright 2010
  * Texas Instruments, <www.ti.com>
@@ -31,120 +30,11 @@
 
 #include <video_fb.h> /* for video_hw_init */
 
+#if 1
 ////////////////////////////////////////////////
 #include <asm/arch/omapdss.h>
 #include <common.h>
 
-void omapdss_init_alt(struct omap_panel *lcd) {
-	struct dss *dss_base = (struct dss*)DSS_BASE;
-	struct dispc *dispc_base = (struct dispc*)DISPC_BASE;
-	struct venc *venc_base = (struct venc*)VENC_BASE;
-
-    	*((uint *) 0x48310034) = 0xBFFFFFFF;	//0xfefffedf;
-	*((uint *) 0x48310094) = 0x40000000;	//0x01000120;
-	*((uint *) 0x48004D44) = 0x0001B00C;	//0x0001b00c;
-	*((uint *) 0x48004E40) = 0x00001006;	//0x00001006;
-	*((uint *) 0x48004D00) = 0x00370037;	//0x00370037;
-	udelay(1000);	// Wait a bit to let the DSS clocks stabilize and lock
-
-   *((uint*)0x48050440)            &= ~0x3;	// dis. lcd & digit
-   *((uint*)0x48050418)            |= 1;	// trigger frame done
-   udelay(5000);
-
-   *((uint*)0x48004e00)            |= 0x00000003;	// EN_TV EN_DSS2 EN_DSS1
-   *((uint*)0x48004e10)            |= 0x00000001;	// EN_DSS
-
-   *((uint*)0x48050410)            |= 0x00000002;	// reset dispc
-/*
-	*((uint *) 0x48050C00) = 0x00000002;
-	*((uint *) 0x48050C04) = 0x0000001B;
-	*((uint *) 0x48050C08) = 0x00000040;
-	*((uint *) 0x48050C0C) = 0x00000000;
-	*((uint *) 0x48050C10) = 0x00000000;
-	*((uint *) 0x48050C14) = 0x00008000;
-	*((uint *) 0x48050C18) = 0x00000000;
-	*((uint *) 0x48050C1C) = 0x00008359;
-	*((uint *) 0x48050C20) = 0x0000020C;
-	*((uint *) 0x48050C24) = 0x00000000;
-	*((uint *) 0x48050C28) = 0x043F2631;
-	*((uint *) 0x48050C2C) = 0x00000024;
-	*((uint *) 0x48050C30) = 0x00000130;
-	*((uint *) 0x48050C34) = 0x00000198;
-	*((uint *) 0x48050C38) = 0x000001C0;
-	*((uint *) 0x48050C3C) = 0x0000006A;
-	*((uint *) 0x48050C40) = 0x0000005C;
-	*((uint *) 0x48050C44) = 0x00000000;
-	*((uint *) 0x48050C48) = 0x00000001;
-	*((uint *) 0x48050C4C) = 0x0000003F;
-	*((uint *) 0x48050C50) = 0x21F07C1F;
-	*((uint *) 0x48050C54) = 0x00000000;
-	*((uint *) 0x48050C58) = 0x00000015;
-	*((uint *) 0x48050C5C) = 0x00001400;
-	*((uint *) 0x48050C60) = 0x00000000;
-	*((uint *) 0x48050C64) = 0x069300F4;
-	*((uint *) 0x48050C68) = 0x0016020C;
-	*((uint *) 0x48050C6C) = 0x00060107;
-	*((uint *) 0x48050C70) = 0x008D034E;
-	*((uint *) 0x48050C74) = 0x000F0359;
-	*((uint *) 0x48050C78) = 0x01A00000;
-	*((uint *) 0x48050C7C) = 0x020501A0;
-	*((uint *) 0x48050C80) = 0x01AC0024;
-	*((uint *) 0x48050C84) = 0x020D01AC;
-	*((uint *) 0x48050C88) = 0x00000006;
-	*((uint *) 0x48050C8C) = 0x00000000;
-	*((uint *) 0x48050C90) = 0x03480079;
-	*((uint *) 0x48050C94) = 0x02040024;
-	*((uint *) 0x48050C98) = 0x00000000;
-	*((uint *) 0x48050C9C) = 0x00000000;
-	*((uint *) 0x48050CA0) = 0x0001008A;
-	*((uint *) 0x48050CA4) = 0x01AC0106;
-	*((uint *) 0x48050CA8) = 0x01060006;
-	*((uint *) 0x48050CAC) = 0x00000000;
-	*((uint *) 0x48050CB0) = 0x00140001;
-	*((uint *) 0x48050CB4) = 0x00010001;
-	*((uint *) 0x48050CB8) = 0x00FF0000;
-	*((uint *) 0x48050CBC) = 0x00000000;
-	*((uint *) 0x48050CC0) = 0x00000000;
-	*((uint *) 0x48050CC4) = 0x0000000D;
-	*((uint *) 0x48050CC8) = 0x00000000;*/
-	dss_base->sysconfig /* *((uint *) 0x48050010)*/ = 0x00000001;
-	dss_base->control /* *((uint *) 0x48050040)*/ = 0x00000078;
-	dss_base->sdi_control /* *((uint *) 0x48050044)*/ = 0x00000000;
-	dss_base->pll_control /* *((uint *) 0x48050048)*/ = 0x00000000;
-	*((uint *) 0x48050050) = 0x00000000;
-	*((uint *) 0x48050058) = 0x00000000;
-	dispc_base->sysconfig /* *((uint *) 0x48050410)*/ = 0x00002015;
-	dispc_base->sysstatus /* *((uint *) 0x48050414)*/ = 0x00000001;
-	dispc_base->config /* *((uint *) 0x48050444)*/ = 0x00000004;
-	dispc_base->default_color[0] /* *((uint *) 0x4805044c)*/ = 0xFFFFFFFF;
-	dispc_base->default_color[1] /* *((uint *) 0x48050450)*/ = 0x00000000;
-	dispc_base->trans_color[0] /* *((uint *) 0x48050454)*/ = 0x00000000;
-	dispc_base->trans_color[1] /* *((uint *) 0x48050458)*/ = 0x00000000;
-	dispc_base->timing_h /* *((uint *) 0x48050464)*/ = 0x0090093f; //0x0ff03f31;
-	dispc_base->timing_v /* *((uint *) 0x48050468)*/ = 0x00b00401; //0x01400504;
-	dispc_base->pol_freq /* *((uint *) 0x4805046c)*/ = 0x00007028;
-	dispc_base->divisor /* *((uint *) 0x48050470)*/ = 0x00010002;
-	dispc_base->size_dig /* *((uint *) 0x48050478)*/ = 0x00ef027f;
-	dispc_base->size_lcd /* *((uint *) 0x4805047c)*/ = 0x01df031f; //0x02cf04ff;
-	dispc_base->gfx_ba[0] /* *((uint *) 0x48050480)*/ = lcd->fb_address1; //0x80500000;
-	dispc_base->gfx_ba[1] /* *((uint *) 0x48050484)*/ = lcd->fb_address2; //0x80500000;
-	*((uint *) 0x48050488) = 0x00000000;
-	*((uint *) 0x4805048c) = 0x02cf04ff;
-	*((uint *) 0x480504a0) = 0x0000008d;
-	*((uint *) 0x480504a4) = 0x03fc03bc;
-	*((uint *) 0x480504a8) = 0x00000400;
-	*((uint *) 0x480504ac) = 0x00000001;
-	*((uint *) 0x480504b0) = 0x00000001;
-	*((uint *) 0x480504b4) = 0x00000000;
-	*((uint *) 0x480504b8) = 0x807ff000;
-	udelay(1000);
-	*((uint *) 0x48050440) = 0x00018169; //0x0001836b;
-	udelay(1000);
-	*((uint *) 0x48050440) = 0x00018169; //0x0001836b;
-	udelay(1000);
-	*((uint *) 0x48050440) = 0x00018169; //0x0001836b;
-	udelay(1000);
-}
 void omapdss_init(struct omap_panel *lcd)
 {
 	unsigned int i;
@@ -282,7 +172,8 @@ void omapdss_set_lcd_timings(struct omap_video_timings *timings, unsigned char i
 	/* Set the LCD size values */
 	dispc_base->size_lcd = FLD_VAL(timings->y_res - 1, 26, 16) | FLD_VAL(timings->x_res - 1, 10, 0);
 }
-#else
+//////////////////////////////////////////////////////////////////////////////
+//#else
 /*
  * Configure VENC for a given Mode (NTSC / PAL)
  */
@@ -382,6 +273,10 @@ void omap3_dss_enable(void)
 	l = readl(&dispc->control);
 	l |= DISPC_ENABLE & ~(DIG_ENABLE);
 	writel(l, &dispc->control);
+////////////////////////////////////
+omap_request_gpio(176);
+omap_set_gpio_direction(176,0);
+omap_set_gpio_dataout(176,1);
 }
 #endif
 
