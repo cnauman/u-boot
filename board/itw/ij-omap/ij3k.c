@@ -80,8 +80,15 @@ u32 get_sysboot_value(void)
         mode = (readl(&ctrl_base->status) >> 5) & 1;
         return mode;
 }
+
+#define OVERRIDE_KEY (26)
 static int con_override = 0;
 void CheckMMC(void) {
+    char buf[8];
+
+	omap_request_gpio(OVERRIDE_KEY);
+	omap_set_gpio_direction(OVERRIDE_KEY, 1);
+	con_override = (~omap_get_gpio_datain(OVERRIDE_KEY) << 1) & 0x2;
     if (get_sysboot_value()) {
         set_default_env("## Resetting to the default environ\n");
 	setenv("mmcdev", "1");
@@ -96,8 +103,10 @@ void CheckMMC(void) {
 			          "run uenvcmd; " \
 		              "fi;" \
                           "fi;");
-        con_override = 1;
+        con_override |= 1;
     }
+    sprintf(buf, "%01d", con_override);
+    setenv("btn", buf);
 }
 extern void omap3_dss_enable(void);
 
@@ -114,6 +123,7 @@ int overwrite_console (void) {
 }
 #endif
 
+#ifdef CONFIG_CMD_I2C
 void i2c_init_r(void) {
 	unsigned char byte;
 #ifdef CONFIG_DRIVER_OMAP34XX_I2C
@@ -139,7 +149,9 @@ void i2c_init_r(void) {
         *((uint *) 0x49058094) = 0x00000506;
         *((uint *) 0x49056094) = 0xF060F000;
 }
+#endif
 
+#ifdef CONFIG_VIDEO
 struct omap_panel lcd =
 {	/* Sharp LQ043T1DG01 4.3" Display */
 	.acbi = 0,
@@ -170,7 +182,9 @@ struct omap_panel lcd =
 	.fb_address1 = LCD_VIDEO_ADDR, //0x805CB000,
 	.fb_address2 = LCD_VIDEO_ADDR, //0x805CB000,
 };
+#endif
 
+#ifdef CONFIG_VIDEO
 void vidmem_clear(void) {
     int i, sze = lcd.logo_width * lcd.logo_height * sizeof(short);
     for (i=0; i < sze; i+=2) {
@@ -179,6 +193,7 @@ void vidmem_clear(void) {
 }
 
 void init_smps(void) {
+#ifdef CONFIG_CMD_I2C
 #define SMARTREFLEX_ENABLE     (1<<3)
     twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, SMARTREFLEX_ENABLE, 
             TWL4030_PM_MASTER_DCDC_GLOBAL_CFG);
@@ -194,7 +209,9 @@ void init_smps(void) {
     *((uint *) 0x48307290) = 0x0fff0fff;
     *((uint *) 0x48307230) = 0x2c000000;
     *((uint *) 0x483072d0) = 0x00002c06;
+#endif
 }
+#endif
 
 /*
  * Routine: misc_init_r
@@ -203,15 +220,18 @@ void init_smps(void) {
 int misc_init_r(void)
 {
 	struct ctrl_id *id_base = (struct ctrl_id *)OMAP34XX_ID_L4_IO_BASE;
+
 #ifdef CONFIG_DRIVER_DM9000
 	uchar enetaddr[6];
 	u32 die_id_0;
 #endif
-
+#ifdef CONFIG_TWL4030_POWER
 	twl4030_power_init();
+#endif
 #ifdef CONFIG_TWL4030_LED
 	twl4030_led_init(/*TWL4030_LED_LEDEN_LEDAON |*/ TWL4030_LED_LEDEN_LEDBON);
 #endif
+#ifdef CONFIG_VIDEO
         init_smps();
 /*
  * Configure DSS to display background color on DVID
@@ -222,6 +242,7 @@ int misc_init_r(void)
         omapdss_init(&lcd);
 	//omap3_dss_venc_config(&venc_config_std_tv, VENC_HEIGHT, VENC_WIDTH);
 //	omap3_dss_panel_config(&lcd_cfg_ij);
+#endif
 
 #ifdef CONFIG_DRIVER_DM9000
 	/* Configure GPMC registers for DM9000 */
@@ -251,8 +272,10 @@ int misc_init_r(void)
 	dieid_num_r();
 
         CheckMMC();
+#ifdef CONFIG_VIDEO
         vidmem_clear();
 	omap3_dss_enable();
+#endif
 	return 0;
 }
 
@@ -284,6 +307,7 @@ int do_tst(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]) {
         if (1 < argc) {
             if (0 == strcmp(argv[1], "set")) {
 //                board_pre_video_init();
+#ifdef CONFIG_VIDEO
                 go_omap3_dss_enable(1); //*argv[2] - '0');
             } else if (0 == strcmp(argv[1], "down")) {
                 writel(0, 0x48050440); // dispc->control
@@ -291,6 +315,7 @@ int do_tst(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]) {
                 init_smps();
             } else if (0 == strcmp(argv[1], "clear")) {
                 vidmem_clear();
+#endif
             } else if (0 == strcmp(argv[1], "reg")) {
 #define SHOWREG(a, b) { \
     printf("%8s:(0x%08x)0x%08x\n", a, b,  \
@@ -341,6 +366,7 @@ U_BOOT_CMD(
 //#endif
 
 //void omapdss_init_alt(struct omap_panel *lcd);
+#ifdef CONFIG_VIDEO
 void go_omap3_dss_enable(int x) {
 	/* Setup LCD to display included Splash header */
 //	lcd.logo = header_data;
@@ -367,6 +393,7 @@ void go_omap3_dss_enable(int x) {
 	/* Activate the Backlight PWM Pin */
 //	omap_set_gpio_dataout(181,1);
 }
+#endif
 
 //#endif
 

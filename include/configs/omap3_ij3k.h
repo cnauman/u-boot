@@ -88,10 +88,12 @@
 #define CONFIG_NET_BOOTPS_PORT           6767
 #define CONFIG_CMD_PING
 #define CONFIG_MTD_PARTITIONS
-#define CONFIG_CMD_UBIFS
 #define CONFIG_CMD_UBI
+#ifdef CONFIG_CMD_UBI
+#define CONFIG_CMD_UBIFS
 #define CONFIG_RBTREE
 #define CONFIG_LZO
+#endif
 #define CONFIG_CMDLINE_EDITING
 
 #define CONFIG_BOOTDELAY	0
@@ -116,6 +118,7 @@
 
 /* video settings */
 #define CONFIG_VIDEO
+#ifdef CONFIG_VIDEO
 #define CONFIG_CFB_CONSOLE
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
@@ -127,6 +130,7 @@
 #define CONFIG_VIDEO_OMAP3
 #define LCD_VIDEO_ADDR           0x81000000
 #define CONFIG_SYS_DEFAULT_VIDEO_MODE 0x311
+#endif
 /* End of my additions */
 
 /* NS16550 Configuration */
@@ -181,79 +185,37 @@
 
 #define CONFIG_SYS_MAX_NAND_DEVICE	1		/* Max number of NAND */
 							/* devices */
-#define CONFIG_JFFS2_NAND
-/* nand device jffs2 lives on */
-#define CONFIG_JFFS2_DEV		"nand0"
-/* start of jffs2 partition */
-#define CONFIG_JFFS2_PART_OFFSET	0x680000
-#define CONFIG_JFFS2_PART_SIZE		0xf980000	/* size of jffs2 */
-							/* partition */
 
 /* commands to include */
 #include <config_cmd_default.h>
 
-#define CONFIG_CMD_DHCP			/* DHCP support			*/
-#define CONFIG_CMD_EXT2			/* EXT2 Support			*/
 #define CONFIG_CMD_FAT			/* FAT support			*/
 #define CONFIG_CMD_I2C			/* I2C serial bus support	*/
-#define CONFIG_CMD_JFFS2		/* JFFS2 Support		*/
 #define CONFIG_CMD_MMC			/* MMC support			*/
 #define CONFIG_CMD_MTDPARTS		/* Enable MTD parts commands	*/
 #define CONFIG_CMD_NAND			/* NAND support			*/
 #define CONFIG_CMD_NAND_LOCK_UNLOCK	/* nand (un)lock commands	*/
 
+#undef CONFIG_CMD_LOADB
+#undef CONFIG_CMD_LOADS
+#undef CONFIG_CMD_NFS
 #undef CONFIG_CMD_FPGA			/* FPGA configuration Support	*/
 #undef CONFIG_CMD_IMI			/* iminfo			*/
 
 /* BOOTP/DHCP options */
-#define CONFIG_BOOTP_SUBNETMASK
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_HOSTNAME
-#define CONFIG_BOOTP_NISDOMAIN
-#define CONFIG_BOOTP_BOOTPATH
 #define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_DNS
-#define CONFIG_BOOTP_DNS2
 #define CONFIG_BOOTP_SEND_HOSTNAME
-#define CONFIG_BOOTP_NTPSERVER
-#define CONFIG_BOOTP_TIMEOFFSET
 #undef CONFIG_BOOTP_VENDOREX
 
 /* Environment information */
 #define CONFIG_ENV_OVERWRITE /* allow to overwrite serial and ethaddr */
 
-/*#define MMC_ENV_VARS \
-	"mmcdev=1\0" \
-	"loadbootenv=fatload mmc ${mmcdev} ${loadaddr} uEnv.txt\0" \
-	"importbootenv=echo Importing environment from mmc ...; " \
-		"env import -t $loadaddr $filesize\0" \
-	"loaduimage=fatload mmc 0 ${loadaddr} uImage\0" \
-	"mmcrootfs=root=/dev/mmcblk0p2\0" \
-	"mmcargs=" \
-		"run commonargs; " \
-		"setenv bootargs ${bootargs} " \
-		"${mmcrootfs} " \
-		"${kernelopts}\0" \
-	"mmcboot=echo Booting from mmc ...; " \
-		"run mmcargs; " \
-		"bootm ${loadaddr}\0"
-#define MMC_CHECKBOOT \
-                "if mmc init ${mmcdev}; then " \
-			"if run loadbootenv; then " \
-			    "run importbootenv; " \
-			"fi;" \
-			"if test -n $uenvcmd; then " \
-			    "run uenvcmd; " \
-			"fi;" \
-			"if run loaduimage; then " \
-			    "run mmcboot; " \
-			"fi;" \
-		"fi;"*/
+/* see .c file for mmc settings */
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"loadaddr=0x82000000\0" \
         "autostart=n\0" \
-	"console=console=ttyO2,115200n8\0" \
+	/*"console=console=ttyO2,115200n8\0"*/ \
 	"video=vram=12M omapfb.mode=lcd:800x480 " \
 		"omapdss.def_disp=lcd\0" \
                 /*"video=omapfb:mode:7inch_LCD\0"*/ \
@@ -269,17 +231,23 @@
         "mtdids=" MTDIDS_DEFAULT "\0" \
 	"nandboot=echo Booting from nand ...; " \
 		"run nandargs; " \
-		"nand read ${loadaddr} 280000 400000; " \
+		/*"nand read ${loadaddr} 280000 400000; "*/ \
 		"bootm ${loadaddr}\0" \
 	/*"netboot=echo Booting from network ...; " \
 		"dhcp ${loadaddr}; " \
 		"run netargs; " \
 		"bootm ${loadaddr}\0"*/ \
-        "write_img=nand erase.part ${name}; nand write.i ${loadaddr} ${name} ${filesize}\0" \
-        "netboot=if tftp uImage; then run nandargs; bootm ${loadaddr}; fi\0"
+	"chkImg=if test $btn -ne 2 && nboot.e kernel; then run nandboot; else run upgrade; fi\0" \
+	"upgrade=if run usbload; then ; else run chkip; fi; imxtract; source ${fileaddr}\0" \
+	"usbload=usb start; fatload usb 0 ${loadaddr} install.img\0" \
+	"chkip=if test $ipaddr -ne \"\" && test $serverip -ne \"\"; then print ipaddr; else bootp; fi\0" \
+	"write_img=nand erase.part ${name}; nand write.i ${loadaddr} ${name} ${filesize}\0" \
+	"netboot=if tftp uImage; then run nandargs; bootm ${loadaddr}; fi\0" \
+	"stdout=vga\0" \
+	"stderr=vga\0" \
+	""
 
-
-#define CONFIG_BOOTCOMMAND "run nandboot"
+#define CONFIG_BOOTCOMMAND "run chkImg"
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
