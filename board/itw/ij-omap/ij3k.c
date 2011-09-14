@@ -213,6 +213,16 @@ void init_smps(void) {
 }
 #endif
 
+#define SYSLED2 (186)
+void init_leds(void) {
+    int led_lst[] = {163, 164, SYSLED2, 0}, i = 0;
+    for (i = 0; led_lst[i]; i++) {
+	omap_request_gpio(led_lst[i]);
+	omap_set_gpio_direction(led_lst[i],0);
+	omap_set_gpio_dataout(led_lst[i],1);
+    }
+    omap_set_gpio_dataout(SYSLED2, 0);
+}
 /*
  * Routine: misc_init_r
  * Description: Configure board specific parts
@@ -229,7 +239,7 @@ int misc_init_r(void)
 	twl4030_power_init();
 #endif
 #ifdef CONFIG_TWL4030_LED
-	twl4030_led_init(/*TWL4030_LED_LEDEN_LEDAON |*/ TWL4030_LED_LEDEN_LEDBON);
+	twl4030_led_init(0/*TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON*/);
 #endif
 #ifdef CONFIG_VIDEO
         init_smps();
@@ -276,6 +286,7 @@ int misc_init_r(void)
         vidmem_clear();
 	omap3_dss_enable();
 #endif
+        init_leds();
 	return 0;
 }
 
