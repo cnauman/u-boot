@@ -216,7 +216,7 @@
 	"loadaddr=0x82000000\0" \
         "autostart=n\0" \
 	/*"console=console=ttyO2,115200n8\0"*/ \
-	"video=vram=12M omapfb.mode=lcd:800x480 " \
+	"video=vram=4M omapfb.mode=lcd:800x480 " \
 		"omapdss.def_disp=lcd\0" \
                 /*"video=omapfb:mode:7inch_LCD\0"*/ \
 	/*"nfsopts=hard,tcp,rsize=65536,wsize=65536\0"*/ \
