@@ -240,7 +240,7 @@
 	"chkImg=if test $btn -ne 2 && nboot.e kernel; then run nandboot; else run upgrade; fi\0" \
 	"upgrade=if run usbload; then ; else run chkip; fi; imxtract; source ${fileaddr}\0" \
 	"usbload=usb start; fatload usb 0 ${loadaddr} install.img\0" \
-	"chkip=if test $ipaddr -ne \"\" && test $serverip -ne \"\"; then print ipaddr; else bootp; fi\0" \
+	"chkip=if test $ipaddr -ne \"\" && test $serverip -ne \"\"; then run netboot; else bootp; fi\0" \
 	"write_img=nand erase.part ${name}; nand write.i ${loadaddr} ${name} ${filesize}\0" \
 	"netboot=if tftp uImage; then run nandargs; bootm ${loadaddr}; fi\0" \
 	"stdout=vga\0" \
