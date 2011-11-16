@@ -297,8 +297,8 @@ void * video_hw_init(void) {
     smi.memSize = smi.winSizeX * smi.winSizeY * smi.gdfBytesPP;
     pcfg.timing_h   = 0x08f03f4f;
     pcfg.timing_v   = 0x04801c04;
-    pcfg.divisor    = 0x00010005;
-    pcfg.lcd_size   = 0x0207031f; //smi.winSizeX << 16 | smi.winSizeY;
+    pcfg.divisor    = 0x00010003;
+    pcfg.lcd_size   = smi.winSizeX << 16 | smi.winSizeY;
     pcfg.load_mode  = 0x00000204 >> FRAME_MODE_SHIFT;
     pcfg.panel_type = 1; //0x00018309;
     pcfg.data_lines = 3; //0x00018309;
