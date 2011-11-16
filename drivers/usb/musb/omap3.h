@@ -41,7 +41,7 @@
 #define OMAP3_OTG_BASE (MENTOR_USB0_BASE + 0x400)
 
 /* Timeout for USB module */
-#define OMAP3_USB_TIMEOUT 0x3FFFFFF
+#define OMAP3_USB_TIMEOUT 0xfffff //0x3FFFFFF
 
 int musb_platform_init(void);
 
