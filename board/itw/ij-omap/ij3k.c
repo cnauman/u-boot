@@ -264,8 +264,9 @@ int misc_init_r(void)
 	writel(NET_GPMC_CONFIG6, &gpmc_cfg->cs[6].config6);
 	writel(NET_GPMC_CONFIG7, &gpmc_cfg->cs[6].config7);
 
-	/* Use OMAP DIE_ID as MAC address */
         // TODO: use eeprom instead
+#ifdef CONFIG_DM9000_NO_SROM
+	/* Use OMAP DIE_ID as MAC address */
 //	if (!eth_getenv_enetaddr("ethaddr", enetaddr)) {
 //		printf("ethaddr not set, using Die ID\n");
 		die_id_0 = readl(&id_base->die_id_0);
@@ -277,6 +278,7 @@ int misc_init_r(void)
 		enetaddr[5] = (die_id_0 & 0x000000ff);
 		eth_setenv_enetaddr("ethaddr", enetaddr);
 //	}
+#endif /* CONFIG_DM9000_NO_SROM */
 #endif
 
 	dieid_num_r();
