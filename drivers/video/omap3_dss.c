@@ -59,7 +59,8 @@ void omapdss_init(struct omap_panel *lcd)
 	// Setup LCD Interface IO and Clocks
 	*((uint*) 0x48310034)		= 0xBFFFFFFF;	// GPIO1: GPIO_OE
 	*((uint*) 0x48310094)		= 0x40000000;	// GPIO1: GPIO_SETDATAOUT
-	*((uint*) 0x48004D44)		= 0x0001B00C;	// CM: Clock_Control_Reg_CM: CM_CLKSEL2_PLL
+        // The following line causes baud rate changeup on dm3730
+//	*((uint*) 0x48004D44)		= 0x0001B00C;	// CM: Clock_Control_Reg_CM: CM_CLKSEL2_PLL
 	*((uint*) 0x48004E40)		= 0x00001006;	// CM: DSS_CM: CM_CLKSEL_DSS
 	*((uint*) 0x48004D00)		= 0x00370037;	// CM: Clock_Control_Reg_CM: CM_CLKEN_PLL
 
