@@ -89,9 +89,10 @@ int do_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 	else
 		return 0; //cmd_usage(cmdtp);
 }
-
+#ifndef CONFIG_DM9000_NOSROM
 U_BOOT_CMD(
 	dm9kee,4,1,do_dm9000_eeprom,
 	"", //"Read/Write eeprom connected to Ethernet Controller",
 	""
 );
+#endif

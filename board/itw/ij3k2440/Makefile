@@ -26,7 +26,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(BOARD).o
 
 #COBJS	:= ij3k2440.o flash.o auto_update.o eeprom.o
-COBJS	:= ij3k2440.o flash.o eeprom.o
+COBJS	:= ij3k2440.o flash.o ../common/eeprom.o
 SOBJS	:= lowlevel_init.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
