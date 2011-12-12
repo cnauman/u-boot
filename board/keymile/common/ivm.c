@@ -206,8 +206,8 @@ static int ivm_analyze_block2(unsigned char *buf, int len)
 	unsigned char	valbuf[CONFIG_SYS_IVM_EEPROM_PAGE_LEN];
 	unsigned long	count;
 
-	/* IVM_MacAddress */
-	sprintf((char *)valbuf, "%pM", buf);
+	/* IVM_MAC Adress begins at offset 1 */
+	sprintf((char *)valbuf, "%pM", buf + 1);
 	ivm_set_value("IVM_MacAddress", (char *)valbuf);
 	/* if an offset is defined, add it */
 #if defined(CONFIG_PIGGY_MAC_ADRESS_OFFSET)
@@ -221,7 +221,12 @@ static int ivm_analyze_block2(unsigned char *buf, int len)
 		sprintf((char *)valbuf, "%pM", buf);
 	}
 #endif
+#ifdef MACH_TYPE_KM_KIRKWOOD
 	setenv((char *)"ethaddr", (char *)valbuf);
+#else
+	if (getenv("ethaddr") == NULL)
+		setenv((char *)"ethaddr", (char *)valbuf);
+#endif
 
 	/* IVM_MacCount */
 	count = (buf[10] << 24) +

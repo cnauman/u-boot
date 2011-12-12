@@ -5,8 +5,8 @@
  *
  *  ----- Adapted for OMAP1510 from ARM920 code ------
  *
- *  Copyright (c) 2001	Marius Gröger <mag@sysgo.de>
- *  Copyright (c) 2002	Alex Züpke <azu@sysgo.de>
+ *  Copyright (c) 2001	Marius GrÃ¶ger <mag@sysgo.de>
+ *  Copyright (c) 2002	Alex ZÃ¼pke <azu@sysgo.de>
  *  Copyright (c) 2002	Gary Jennejohn <garyj@denx.de>
  *  Copyright (c) 2003	Richard Woodruff <r-woodruff2@ti.com>
  *  Copyright (c) 2003	Kshitij	 <kshitij@ti.com>
@@ -271,7 +271,7 @@ clbss_l:str	r2, [r0]		/* clear loop...		    */
 	bne	clbss_l
 
 	bl coloured_LED_init
-	bl red_LED_on
+	bl red_led_on
 #endif
 
 /*

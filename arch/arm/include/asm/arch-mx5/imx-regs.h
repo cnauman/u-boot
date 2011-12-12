@@ -54,7 +54,7 @@
  */
 #define MMC_SDHC1_BASE_ADDR	(SPBA0_BASE_ADDR + 0x00004000)
 #define MMC_SDHC2_BASE_ADDR	(SPBA0_BASE_ADDR + 0x00008000)
-#define UART3_BASE_ADDR 	(SPBA0_BASE_ADDR + 0x0000C000)
+#define UART3_BASE		(SPBA0_BASE_ADDR + 0x0000C000)
 #define CSPI1_BASE_ADDR 	(SPBA0_BASE_ADDR + 0x00010000)
 #define SSI2_BASE_ADDR		(SPBA0_BASE_ADDR + 0x00014000)
 #define MMC_SDHC3_BASE_ADDR	(SPBA0_BASE_ADDR + 0x00020000)
@@ -83,8 +83,8 @@
 #define EPIT2_BASE_ADDR		(AIPS1_BASE_ADDR + 0x000B0000)
 #define PWM1_BASE_ADDR		(AIPS1_BASE_ADDR + 0x000B4000)
 #define PWM2_BASE_ADDR		(AIPS1_BASE_ADDR + 0x000B8000)
-#define UART1_BASE_ADDR		(AIPS1_BASE_ADDR + 0x000BC000)
-#define UART2_BASE_ADDR		(AIPS1_BASE_ADDR + 0x000C0000)
+#define UART1_BASE		(AIPS1_BASE_ADDR + 0x000BC000)
+#define UART2_BASE		(AIPS1_BASE_ADDR + 0x000C0000)
 #define SRC_BASE_ADDR		(AIPS1_BASE_ADDR + 0x000D0000)
 #define CCM_BASE_ADDR		(AIPS1_BASE_ADDR + 0x000D4000)
 #define GPC_BASE_ADDR		(AIPS1_BASE_ADDR + 0x000D8000)
@@ -100,6 +100,9 @@
 #define PLL1_BASE_ADDR		(AIPS2_BASE_ADDR + 0x00080000)
 #define PLL2_BASE_ADDR		(AIPS2_BASE_ADDR + 0x00084000)
 #define PLL3_BASE_ADDR		(AIPS2_BASE_ADDR + 0x00088000)
+#ifdef	CONFIG_MX53
+#define PLL4_BASE_ADDR		(AIPS2_BASE_ADDR + 0x0008c000)
+#endif
 #define AHBMAX_BASE_ADDR	(AIPS2_BASE_ADDR + 0x00094000)
 #define IIM_BASE_ADDR		(AIPS2_BASE_ADDR + 0x00098000)
 #define CSU_BASE_ADDR		(AIPS2_BASE_ADDR + 0x0009C000)
@@ -235,6 +238,11 @@
 
 /* Assuming 24MHz input clock with doubler ON */
 /*                            MFI         PDF */
+#define DP_OP_864	((8 << 4) + ((1 - 1)  << 0))
+#define DP_MFD_864	(180 - 1) /* PL Dither mode */
+#define DP_MFN_864	180
+#define DP_MFN_800_DIT	60 /* PL Dither mode */
+
 #define DP_OP_850	((8 << 4) + ((1 - 1)  << 0))
 #define DP_MFD_850	(48 - 1)
 #define DP_MFN_850	41
@@ -276,8 +284,6 @@
 
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/types.h>
-
-extern void imx_get_mac_from_fuse(unsigned char *mac);
 
 #define __REG(x)	(*((volatile u32 *)(x)))
 #define __REG16(x)	(*((volatile u16 *)(x)))
@@ -403,13 +409,6 @@ struct iomuxc {
 	u32	omux4;
 };
 #endif
-
-/* GPIO Registers */
-struct gpio_regs {
-	u32	gpio_dr;
-	u32	gpio_dir;
-	u32	gpio_psr;
-};
 
 /* System Reset Controller (SRC) */
 struct src {

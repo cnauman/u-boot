@@ -27,7 +27,7 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(SOC).o
 
-COBJS	= soc.o clock.o iomux.o timer.o speed.o
+COBJS	= soc.o clock.o iomux.o
 SOBJS = lowlevel_init.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
@@ -44,7 +44,5 @@ $(LIB):	$(OBJS)
 include $(SRCTREE)/rules.mk
 
 sinclude $(obj).depend
-
-lowlevel_init.o : $(TOPDIR)/include/asm/arch/asm-offsets.h
 
 #########################################################################

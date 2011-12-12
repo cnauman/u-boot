@@ -31,14 +31,9 @@
 #include <netdev.h>
 #include <mmc.h>
 #include <fsl_esdhc.h>
-#include <mxc_gpio.h>
+#include <asm/gpio.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-
-u32 get_board_rev(void)
-{
-	return get_cpu_rev();
-}
 
 int dram_init(void)
 {
@@ -139,7 +134,8 @@ struct fsl_esdhc_cfg esdhc_cfg[1] = {
 
 int board_mmc_getcd(u8 *cd, struct mmc *mmc)
 {
-	*cd = mxc_gpio_get(77); /*GPIO3_13*/
+	mxc_request_iomux(MX53_PIN_EIM_DA13, IOMUX_CONFIG_ALT1);
+	*cd = gpio_get_value(77); /*GPIO3_13*/
 
 	return 0;
 }
@@ -214,7 +210,6 @@ int board_early_init_f(void)
 
 int board_init(void)
 {
-	gd->bd->bi_arch_number = MACH_TYPE_MX53_SMD;
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 

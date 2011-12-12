@@ -5,7 +5,7 @@
  * Andreas Bießmann <andreas.devel@googlemail.com>
  *
  * (C) Copyright 2007-2008
- * Stelian Pop <stelian.pop@leadtechdesign.com>
+ * Stelian Pop <stelian@popies.net>
  * Lead Tech Design <www.leadtechdesign.com>
  *
  * See file CREDITS for list of people who contributed to this
@@ -75,11 +75,9 @@ void at91_serial2_hw_init(void)
 	writel(1 << ATMEL_ID_USART2, &pmc->pcer);
 }
 
-
 void at91_seriald_hw_init(void)
 {
 	at91_set_a_periph(AT91_PIO_PORTA, 30, PUP);		/* DRXD */
 	at91_set_a_periph(AT91_PIO_PORTA, 31, 1);		/* DTXD */
 	/* writing SYS to PCER has no effect on AT91RM9200 */
 }
-

@@ -78,7 +78,7 @@ static void s3c24x0_hwcontrol(struct mtd_info *mtd, int cmd, unsigned int ctrl)
 	struct nand_chip *chip = mtd->priv;
 	struct NAND_TYPE *nand = GET_NAND_BASE();
 
-	debugX(1, "hwcontrol(): 0x%02x 0x%02x\n", cmd, ctrl);
+	debug("hwcontrol(): 0x%02x 0x%02x\n", cmd, ctrl);
 
 	if (ctrl & NAND_CTRL_CHANGE) {
 		ulong IO_ADDR_W = (ulong)nand;
@@ -114,27 +114,28 @@ static void s3c24x0_hwcontrol(struct mtd_info *mtd, int cmd, unsigned int ctrl)
 
 static int s3c24x0_dev_ready(struct mtd_info *mtd)
 {
-	struct NAND_TYPE *nand = GET_NAND_BASE();
-	debugX(1, "dev_ready\n");
+	struct s3c2410_nand *nand = s3c2410_get_base_nand();
+	debug("dev_ready\n");
 	return readl(&nand->nfstat) & 0x01;
 }
 
 #ifdef CONFIG_S3C2410_NAND_HWECC
 void s3c2410_nand_enable_hwecc(struct mtd_info *mtd, int mode)
 {
-	struct NAND_TYPE *nand = GET_NAND_BASE();
-	debugX(1, "s3c2410_nand_enable_hwecc(%p, %d)\n", mtd, mode);
+	struct s3c2410_nand *nand = s3c2410_get_base_nand();
+	debug("s3c2410_nand_enable_hwecc(%p, %d)\n", mtd, mode);
 	writel(readl(&nand->nfconf) | S3C2410_NFCONF_INITECC, &nand->nfconf);
 }
 
 static int s3c2410_nand_calculate_ecc(struct mtd_info *mtd, const u_char *dat,
 				      u_char *ecc_code)
 {
-	struct NAND_TYPE *nand = GET_NAND_BASE();
-	ecc_code[0] = readb(&nand->NFECC);
-	ecc_code[1] = readb(&nand->NFECC + 1);
-	ecc_code[2] = readb(&nand->NFECC + 2);
-	debugX(1, "s3c2410_nand_calculate_hwecc(%p,): 0x%02x 0x%02x 0x%02x\n",
+
+	struct s3c2410_nand *nand = s3c2410_get_base_nand();
+	ecc_code[0] = readb(&nand->nfecc);
+	ecc_code[1] = readb(&nand->nfecc + 1);
+	ecc_code[2] = readb(&nand->nfecc + 2);
+	debug("s3c2410_nand_calculate_hwecc(%p,): 0x%02x 0x%02x 0x%02x\n",
 	       mtd , ecc_code[0], ecc_code[1], ecc_code[2]);
 
 	return 0;
@@ -160,7 +161,7 @@ int board_nand_init(struct nand_chip *nand)
 	struct s3c24x0_clock_power *clk_power = s3c24x0_get_base_clock_power();
 	struct NAND_TYPE *nand_reg = GET_NAND_BASE();
 
-	debugX(1, "board_nand_init()\n");
+	debug("board_nand_init()\n");
 
 	writel(readl(&clk_power->clkcon) | (1 << 4), &clk_power->clkcon);
 
@@ -226,7 +227,7 @@ int board_nand_init(struct nand_chip *nand)
 	nand->options = 0;
 #endif
 
-	debugX(1, "end of nand_init\n");
+	debug("end of nand_init\n");
 
 	return 0;
 }

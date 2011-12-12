@@ -1,8 +1,8 @@
 /*
  *  armboot - Startup Code for ARM920 CPU-core
  *
- *  Copyright (c) 2001	Marius Gröger <mag@sysgo.de>
- *  Copyright (c) 2002	Alex Züpke <azu@sysgo.de>
+ *  Copyright (c) 2001	Marius GrÃ¶ger <mag@sysgo.de>
+ *  Copyright (c) 2002	Alex ZÃ¼pke <azu@sysgo.de>
  *  Copyright (c) 2002	Gary Jennejohn <garyj@denx.de>
  *
  * See file CREDITS for list of people who contributed to this
@@ -277,7 +277,7 @@ clbss_l:str	r2, [r0]		/* clear loop...		    */
 	bne	clbss_l
 
 	bl coloured_LED_init
-	bl red_LED_on
+	bl red_led_on
 #endif
 
 /*

@@ -107,6 +107,15 @@ static int sh_net_init(void)
 }
 #endif
 
+#if defined(CONFIG_CMD_MMC)
+static int sh_mmc_init(void)
+{
+	puts("MMC:   ");
+	mmc_initialize(gd->bd);
+	return 0;
+}
+#endif
+
 typedef int (init_fnc_t) (void);
 
 init_fnc_t *init_sequence[] =
@@ -132,11 +141,14 @@ init_fnc_t *init_sequence[] =
 	stdio_init,
 	console_init_r,
 	interrupt_init,
-#ifdef BOARD_LATE_INIT
+#ifdef CONFIG_BOARD_LATE_INIT
 	board_late_init,
 #endif
 #if defined(CONFIG_CMD_NET)
 	sh_net_init,		/* SH specific eth init */
+#endif
+#if defined(CONFIG_CMD_MMC)
+	sh_mmc_init,
 #endif
 	NULL			/* Terminate this list */
 };

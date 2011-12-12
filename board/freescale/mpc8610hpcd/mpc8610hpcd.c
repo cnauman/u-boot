@@ -1,5 +1,5 @@
 /*
- * Copyright 2007,2009-2010 Freescale Semiconductor, Inc.
+ * Copyright 2007,2009-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -76,14 +76,14 @@ int misc_init_r(void)
 	/* Verify if enabled */
 	tmp_val = 0;
 	i2c_read(0x38, 0x08, 1, &tmp_val, sizeof(tmp_val));
-	debug("DVI Encoder Read: 0x%02lx\n",tmp_val);
+	debug("DVI Encoder Read: 0x%02x\n", tmp_val);
 
 	tmp_val = 0x10;
 	i2c_write(0x38, 0x0A, 1, &tmp_val, sizeof(tmp_val));
 	/* Verify if enabled */
 	tmp_val = 0;
 	i2c_read(0x38, 0x0A, 1, &tmp_val, sizeof(tmp_val));
-	debug("DVI Encoder Read: 0x%02lx\n",tmp_val);
+	debug("DVI Encoder Read: 0x%02x\n", tmp_val);
 
 	return 0;
 }
@@ -227,11 +227,7 @@ static struct pci_config_table pci_fsl86xxads_config_table[] = {
 #endif
 
 
-static struct pci_controller pci1_hose = {
-#ifndef CONFIG_PCI_PNP
-config_table:pci_mpc86xxcts_config_table
-#endif
-};
+static struct pci_controller pci1_hose;
 #endif /* CONFIG_PCI */
 
 void pci_init_board(void)
@@ -239,12 +235,11 @@ void pci_init_board(void)
 	volatile immap_t *immap = (immap_t *) CONFIG_SYS_CCSRBAR;
 	volatile ccsr_gur_t *gur = &immap->im_gur;
 	struct fsl_pci_info pci_info;
-	u32 devdisr, pordevsr;
+	u32 devdisr;
 	int first_free_busno;
 	int pci_agent;
 
 	devdisr = in_be32(&gur->devdisr);
-	pordevsr = in_be32(&gur->pordevsr);
 
 	first_free_busno = fsl_pcie_init_board(0);
 
@@ -261,6 +256,9 @@ void pci_init_board(void)
 			" (base address %lx)\n",
 			pci_agent ? "Agent" : "Host",
 			pci_info.regs);
+#ifndef CONFIG_PCI_PNP
+		pci1_hose.config_table = pci_mpc86xxcts_config_table;
+#endif
 		first_free_busno = fsl_pci_init_port(&pci_info,
 					&pci1_hose, first_free_busno);
 	} else {

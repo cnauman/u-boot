@@ -3,15 +3,16 @@
  * Texas Instruments, <www.ti.com>
  * Syed Mohammed Khasim <khasim@ti.com>
  *
- * Referred to Linux DSS driver files for OMAP3
+ * Referred to Linux Kernel DSS driver files for OMAP3 by
+ * Tomi Valkeinen from drivers/video/omap2/dss/
  *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation's version 2 of
- * the License.
+ * published by the Free Software Foundation's version 2 and any
+ * later version the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of

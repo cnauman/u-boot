@@ -174,14 +174,16 @@ void arch_lmb_reserve(struct lmb *lmb)
 	return ;
 }
 
-static void boot_prep_linux(void)
+static void boot_prep_linux(bootm_headers_t *images)
 {
 #ifdef CONFIG_MP
-	/* if we are MP make sure to flush the dcache() to any changes are made
-	 * visibile to all other cores */
-	flush_dcache();
+	/*
+	 * if we are MP make sure to flush the device tree so any changes are
+	 * made visibile to all other cores.  In AMP boot scenarios the cores
+	 * might not be HW cache coherent with each other.
+	 */
+	flush_cache((unsigned long)images->ft_addr, images->ft_len);
 #endif
-	return ;
 }
 
 static int boot_cmdline_linux(bootm_headers_t *images)
@@ -340,7 +342,7 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t *ima
 	}
 
 	if (flag & BOOTM_STATE_OS_PREP) {
-		boot_prep_linux();
+		boot_prep_linux(images);
 		return 0;
 	}
 
@@ -349,7 +351,7 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t *ima
 		return 0;
 	}
 
-	boot_prep_linux();
+	boot_prep_linux(images);
 	ret = boot_body_linux(images);
 	if (ret)
 		return ret;
