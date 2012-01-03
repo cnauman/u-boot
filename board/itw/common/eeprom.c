@@ -25,6 +25,7 @@
 #include <command.h>
 #include <dm9000.h>
 
+#ifndef CONFIG_DM9000_NO_SROM
 static int do_read_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	unsigned int i;
 	u8 data[2];
@@ -89,7 +90,7 @@ int do_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 	else
 		return 0; //cmd_usage(cmdtp);
 }
-#ifndef CONFIG_DM9000_NOSROM
+
 U_BOOT_CMD(
 	dm9kee,4,1,do_dm9000_eeprom,
 	"", //"Read/Write eeprom connected to Ethernet Controller",
