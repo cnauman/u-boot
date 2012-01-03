@@ -38,11 +38,12 @@
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/mem.h>
+#include <asm/arch/mmc_host_def.h>
 #include <asm/mach-types.h>
 #include <mmc.h>
-#include <asm/arch/omapdss.h>
+#include <asm/arch/dss.h>
 #include <environment.h>
-#include <asm/arch/gpio.h>
+#include <asm/gpio.h>
 
 #include "ij3k.h"
 
@@ -86,16 +87,17 @@ static int con_override = 0;
 void CheckMMC(void) {
     char buf[8];
 
-	omap_request_gpio(OVERRIDE_KEY);
-	omap_set_gpio_direction(OVERRIDE_KEY, 1);
-	con_override = (~omap_get_gpio_datain(OVERRIDE_KEY) << 1) & 0x2;
+	gpio_request(OVERRIDE_KEY, "");
+	gpio_direction_input(OVERRIDE_KEY);
+	con_override = (~gpio_get_value(OVERRIDE_KEY) << 1) & 0x2;
+        gpio_free(OVERRIDE_KEY);
     if (get_sysboot_value()) {
         set_default_env("## Resetting to the default environ\n");
-	setenv("mmcdev", "1");
+	setenv("mmcdev", "0");
 	setenv("loadbootenv", "fatload mmc ${mmcdev} ${loadaddr} uEnv.txt");
 	setenv("importbootenv", "echo Importing environment from mmc ...; " \
 		"env import -t $loadaddr $filesize");
-        setenv("bootcmd", "if mmc init ${mmcdev}; then " \
+        setenv("bootcmd", "if mmc rescan; then " \
 			      "if run loadbootenv; then " \
 			          "run importbootenv; " \
 			      "fi;" \
@@ -152,6 +154,7 @@ void i2c_init_r(void) {
 #endif
 
 #ifdef CONFIG_VIDEO
+#if 0
 struct omap_panel lcd =
 {	/* Sharp LQ043T1DG01 4.3" Display */
 	.acbi = 0,
@@ -183,13 +186,27 @@ struct omap_panel lcd =
 	.fb_address2 = LCD_VIDEO_ADDR, //0x805CB000,
 };
 #endif
+#define DVI_BEAGLE_ORANGE_COL          0x00FF8000
+static const struct panel_config lcd_cfg_ij = {
+	.timing_h	= 0x1a4024c9, /* Horizantal timing */
+	.timing_v	= 0x02c00509, /* Vertical timing */
+	.pol_freq	= 0x00007028, /* Pol Freq */
+	.divisor	= 0x00010001, /* 96MHz Pixel Clock */
+//	.lcd_size	= 0x02ff03ff, /* 1024x768 */
+	.lcd_size	= 0x01df031f, /* 800x480 */
+	.panel_type	= 0x01, /* TFT */
+	.data_lines	= 0x03, /* 24 Bit RGB */
+	.load_mode	= 0x02, /* Frame Mode */
+	.panel_color	= DVI_BEAGLE_ORANGE_COL /* ORANGE */
+};
+#endif
 
 #ifdef CONFIG_VIDEO
 void vidmem_clear(void) {
-    int i, sze = lcd.logo_width * lcd.logo_height * sizeof(short);
+/*    int i, sze = lcd.logo_width * lcd.logo_height * sizeof(short);
     for (i=0; i < sze; i+=2) {
         *((unsigned short*)(lcd.fb_address1 + i)) = 0x0000;
-    }
+    }*/
 }
 
 void init_smps(void) {
@@ -213,25 +230,55 @@ void init_smps(void) {
 }
 #endif
 
+                          // 5.7" ES nothing selected
+#define LCD_10_4_XLS (89) // 10.4" XLS
+#define LCD_7_0_HH   (71) // 7" handheld
+#define LCD_7_0_ES   (72) // 7" ES+
+#define LCD_10_2_XLS (73) // 10.2" controller
+#define LCD_PWREN    (164)
+void set_vidtype(void) {
+    int pin, val = 0, i = 0, poffset, pval, offset;
+    int dss_pins[] = {1, 2, 3, 19, 0};
+    char buf[10], *pc;
+    gpio_request(LCD_PWREN, "");
+    gpio_direction_output(LCD_PWREN,0);
+    gpio_set_value(LCD_PWREN,0);
+    udelay(1000);
+    for (i = 0; dss_pins[i]; i++) { 
+        poffset = CP(DSS_DATA0) + dss_pins[i]*2;
+        pin = 70 + dss_pins[i];
+        MUX_VAL(poffset, (IEN | PTU | EN | M4));
+        pval = gpio_get_value(pin);
+	val |= ((pval & 1) << i);
+        MUX_VAL(poffset, (IDIS | PTD | DIS | M0));
+    }
+    val = (~val) & 0xf;
+    gpio_free(LCD_PWREN);
+    sprintf(buf, "vid%02d", val);
+    setenv("vidtype", buf);
+    pc = getenv(buf);
+    if (pc) setenv("video", pc);
+}
+
 #define SYSLED2 (186)
 void init_leds(void) {
     int led_lst[] = {163, 164, SYSLED2, 0}, i = 0;
     for (i = 0; led_lst[i]; i++) {
-	omap_request_gpio(led_lst[i]);
-	omap_set_gpio_direction(led_lst[i],0);
-	omap_set_gpio_dataout(led_lst[i],1);
+	gpio_request(led_lst[i], "");
+	gpio_direction_output(led_lst[i],0);
+	gpio_set_value(led_lst[i],1);
     }
-    omap_set_gpio_dataout(SYSLED2, 0);
+    gpio_set_value(SYSLED2, 0);
 }
+extern void        read4030Var(int);
 /*
  * Routine: misc_init_r
  * Description: Configure board specific parts
  */
 int misc_init_r(void)
 {
+#if defined(CONFIG_DRIVER_DM9000) && defined(CONFIG_DM9000_NO_SROM)
 	struct ctrl_id *id_base = (struct ctrl_id *)OMAP34XX_ID_L4_IO_BASE;
-
-#ifdef CONFIG_DRIVER_DM9000
 	uchar enetaddr[6];
 	u32 die_id_0;
 #endif
@@ -247,9 +294,9 @@ int misc_init_r(void)
  * Configure DSS to display background color on DVID
  * Configure VENC to display color bar on S-Video
  */
-	lcd.logo_width = 800; //width;
+/*	lcd.logo_width = 800; //width;
 	lcd.logo_height = 480; //height;
-        omapdss_init(&lcd);
+        omapdss_init(&lcd);*/
 	//omap3_dss_venc_config(&venc_config_std_tv, VENC_HEIGHT, VENC_WIDTH);
 //	omap3_dss_panel_config(&lcd_cfg_ij);
 #endif
@@ -282,9 +329,9 @@ int misc_init_r(void)
 #endif
 
 	dieid_num_r();
-
         CheckMMC();
 #ifdef CONFIG_VIDEO
+        set_vidtype();
         vidmem_clear();
 	omap3_dss_enable();
 #endif
@@ -303,6 +350,14 @@ void set_muxconf_regs(void)
 	MUX_DEVKIT8000();
 }
 
+#ifdef CONFIG_GENERIC_MMC
+int board_mmc_init(bd_t *bis)
+{
+       omap_mmc_init(0);
+       return 0;
+}
+#endif
+
 #ifdef CONFIG_DRIVER_DM9000
 /*
  * Routine: board_eth_init
@@ -320,6 +375,10 @@ int do_tst(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]) {
         if (1 < argc) {
             if (0 == strcmp(argv[1], "set")) {
 //                board_pre_video_init();
+            } else if (0 == strcmp(argv[1], "rusb")) {
+                read4030Var(0);
+            } else if (0 == strcmp(argv[1], "cusb")) {
+                read4030Var(1);
 #ifdef CONFIG_VIDEO
                 go_omap3_dss_enable(1); //*argv[2] - '0');
             } else if (0 == strcmp(argv[1], "down")) {
@@ -395,12 +454,12 @@ void go_omap3_dss_enable(int x) {
 //	omap_set_gpio_dataout(181,0);
 
 	/* Request and Activate Panel Logic Power Supply Pin */
-	omap_request_gpio(176);
-	omap_set_gpio_direction(176,0);
-	omap_set_gpio_dataout(176,1);
+	gpio_request(176, "");
+	gpio_direction_output(176,0);
+	gpio_set_value(176,1);
 
 	/* Initialize the Display System */
-        /*if (1==x)*/ omapdss_init(&lcd);
+        /*if (1==x)*/ //omapdss_init(&lcd);
         //else if (2==x) omapdss_init_alt(&lcd);
 
 	/* Activate the Backlight PWM Pin */
