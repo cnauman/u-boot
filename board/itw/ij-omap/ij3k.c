@@ -68,6 +68,8 @@ int board_init(void)
 	/* boot param addr */
 	gd->bd->bi_boot_params = (OMAP34XX_SDRC_CS0 + 0x100);
 
+        gd->flags |= GD_FLG_SILENT;
+
 	return 0;
 }
 
@@ -82,15 +84,9 @@ u32 get_sysboot_value(void)
         return mode;
 }
 
-#define OVERRIDE_KEY (26)
 static int con_override = 0;
 void CheckMMC(void) {
     char buf[8];
-
-	gpio_request(OVERRIDE_KEY, "");
-	gpio_direction_input(OVERRIDE_KEY);
-	con_override = (~gpio_get_value(OVERRIDE_KEY) << 1) & 0x2;
-        gpio_free(OVERRIDE_KEY);
     if (get_sysboot_value()) {
         set_default_env("## Resetting to the default environ\n");
 	setenv("mmcdev", "0");
@@ -114,14 +110,21 @@ extern void omap3_dss_enable(void);
 
 #ifdef CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
 int overwrite_console (void) {
-/*    if (1 == con_override) {
-        if (0 == serial_assign(s3c24xx_serial1_device.name)) {
-            blue_LED_on();
-            serial_init();
-        }
-    }*/
-    gd->flags &= ~GD_FLG_SILENT; // undo the silent treatment
-    return (1 == con_override); 
+    int gpio_pins[] = {107, 108,/* 109, 110,*/ 0}, i, ret = 0;
+
+    con_override = 0;
+    for (i=0; gpio_pins[i]; i++) {
+	gpio_request(gpio_pins[i], "");
+	gpio_direction_input(gpio_pins[i]);
+	con_override |= (~gpio_get_value(gpio_pins[i]) & 1);
+        con_override <<= 1;
+        gpio_free(gpio_pins[i]);
+    }
+    ret = ((con_override >> 1) & 1); 
+
+    if (ret)
+        gd->flags &= ~GD_FLG_SILENT; // undo the silent treatment
+    return ret;
 }
 #endif
 
