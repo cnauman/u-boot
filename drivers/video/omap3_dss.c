@@ -109,8 +109,13 @@ void omap3_dss_panel_config(const struct panel_config *panel_cfg)
 	writel(panel_cfg->timing_h, &dispc->timing_h);
 	writel(panel_cfg->timing_v, &dispc->timing_v);
 	writel(panel_cfg->pol_freq, &dispc->pol_freq);
+	writel(LCD_VIDEO_ADDR, &dispc->gfx_ba[0]);
+	writel(dispc->gfx_ba[0], &dispc->gfx_ba[1]);
 	writel(panel_cfg->divisor, &dispc->divisor);
 	writel(panel_cfg->lcd_size, &dispc->size_lcd);
+	writel(dispc->size_lcd, &dispc->gfx_size);
+	writel(GFX_BURST(2) | GFX_FMT(RGB_16) | GFX_EN, 
+                &dispc->gfx_attributes);
 	writel((panel_cfg->load_mode << FRAME_MODE_SHIFT), &dispc->config);
 	writel(((panel_cfg->panel_type << TFTSTN_SHIFT) |
 		(panel_cfg->data_lines << DATALINES_SHIFT)), &dispc->control);
