@@ -61,6 +61,10 @@ struct dispc_regs {
 	u32 size_dig;				/* 0x78 */
 	u32 size_lcd;				/* 0x7C */
         u32 gfx_ba[2];                          /* 0x80, 0x84 */
+        u32 gfx_position;                       /* 0x88 */
+        u32 gfx_size;                           /* 0x8C */
+        u32 res[4];                             /* 0x90-0x9c */
+        u32 gfx_attributes;                     /* 0xa0 */
 };
 
 /* VENC Registers */
@@ -149,6 +153,13 @@ struct venc_regs {
 						 DAC_DEMEN | \
 						 DAC_POWERDN | \
 						 VENC_OUT_SEL)
+
+/* Gfx params */
+#define RGB_16                                  (6)
+#define GFX_FMT(val)                            ((val) << 1)
+#define GFX_BURST(val)                          ((val) << 6)
+#define GFX_EN                                  (1)
+
 /*
  * Panel Configuration
  */
