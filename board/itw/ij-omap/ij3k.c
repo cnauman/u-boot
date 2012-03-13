@@ -13,6 +13,9 @@
  *	Richard Woodruff <r-woodruff2@ti.com>
  *	Syed Mohammed Khasim <khasim@ti.com>
  *
+ * Derived from Beagle Board and devkit8k 
+ * (C) Copyright 2012
+ * Craig Nauman <cnauman@diagraph.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -45,6 +48,8 @@
 #include <environment.h>
 #include <asm/gpio.h>
 
+#include <video_fb.h> /* for video_hw_init */
+
 #include "ij3k.h"
 
 #define pr_debug(fmt, args...) debug(fmt, ##args)
@@ -69,6 +74,9 @@ int board_init(void)
 	gd->bd->bi_boot_params = (OMAP34XX_SDRC_CS0 + 0x100);
 
         gd->flags |= GD_FLG_SILENT;
+#ifdef CONFIG_VIDEO
+        gd->fb_base = LCD_VIDEO_ADDR;
+#endif
 
 	return 0;
 }
@@ -106,7 +114,6 @@ void CheckMMC(void) {
     sprintf(buf, "%01d", con_override);
     setenv("btn", buf);
 }
-extern void omap3_dss_enable(void);
 
 #ifdef CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
 int overwrite_console (void) {
@@ -122,7 +129,7 @@ int overwrite_console (void) {
     }
     ret = ((con_override >> 1) & 1); 
 
-    if (ret)
+//    if (ret)
         gd->flags &= ~GD_FLG_SILENT; // undo the silent treatment
     return ret;
 }
@@ -205,11 +212,11 @@ static const struct panel_config lcd_cfg_ij = {
 #endif
 
 #ifdef CONFIG_VIDEO
-void vidmem_clear(void) {
-/*    int i, sze = lcd.logo_width * lcd.logo_height * sizeof(short);
-    for (i=0; i < sze; i+=2) {
-        *((unsigned short*)(lcd.fb_address1 + i)) = 0x0000;
-    }*/
+void vidmem_clear(int width, int height, int bytesPP) {
+    int sze = width * height * bytesPP;
+    void * addr = (void *)gd->fb_base;
+
+    memset(addr, 0, sze);
 }
 
 void init_smps(void) {
@@ -239,10 +246,11 @@ void init_smps(void) {
 #define LCD_7_0_ES   (72) // 7" ES+
 #define LCD_10_2_XLS (73) // 10.2" controller
 #define LCD_PWREN    (164)
-void set_vidtype(void) {
-    int pin, val = 0, i = 0, poffset, pval, offset;
+int get_vidtype(void) {
+    int pin, val = 0, i = 0, poffset, pval; //, offset;
     int dss_pins[] = {1, 2, 3, 19, 0};
-    char buf[10], *pc;
+    char buf[4];
+
     gpio_request(LCD_PWREN, "");
     gpio_direction_output(LCD_PWREN,0);
     gpio_set_value(LCD_PWREN,0);
@@ -257,10 +265,10 @@ void set_vidtype(void) {
     }
     val = (~val) & 0xf;
     gpio_free(LCD_PWREN);
-    sprintf(buf, "vid%02d", val);
-    setenv("vidtype", buf);
-    pc = getenv(buf);
-    if (pc) setenv("video", pc);
+
+    sprintf(buf, "%02d", val);
+    setenv("disp", buf);
+    return val;
 }
 
 #define SYSLED2 (186)
@@ -314,7 +322,6 @@ int misc_init_r(void)
 	writel(NET_GPMC_CONFIG6, &gpmc_cfg->cs[6].config6);
 	writel(NET_GPMC_CONFIG7, &gpmc_cfg->cs[6].config7);
 
-        // TODO: use eeprom instead
 #ifdef CONFIG_DM9000_NO_SROM
 	/* Use OMAP DIE_ID as MAC address */
 //	if (!eth_getenv_enetaddr("ethaddr", enetaddr)) {
@@ -334,9 +341,7 @@ int misc_init_r(void)
 	dieid_num_r();
         CheckMMC();
 #ifdef CONFIG_VIDEO
-        set_vidtype();
-        vidmem_clear();
-	omap3_dss_enable();
+//        set_vidtype();
 #endif
         init_leds();
 	return 0;
@@ -372,103 +377,192 @@ int board_eth_init(bd_t *bis)
 }
 #endif
 
-extern void dumpregs(void);
-void go_omap3_dss_enable(int x);
-int do_tst(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]) {
-        if (1 < argc) {
-            if (0 == strcmp(argv[1], "set")) {
-//                board_pre_video_init();
-            } else if (0 == strcmp(argv[1], "rusb")) {
-                read4030Var(0);
-            } else if (0 == strcmp(argv[1], "cusb")) {
-                read4030Var(1);
-#ifdef CONFIG_VIDEO
-                go_omap3_dss_enable(1); //*argv[2] - '0');
-            } else if (0 == strcmp(argv[1], "down")) {
-                writel(0, 0x48050440); // dispc->control
-            } else if (0 == strcmp(argv[1], "smps")) {
-                init_smps();
-            } else if (0 == strcmp(argv[1], "clear")) {
-                vidmem_clear();
-#endif
-            } else if (0 == strcmp(argv[1], "reg")) {
-#define SHOWREG(a, b) { \
-    printf("%8s:(0x%08x)0x%08x\n", a, b,  \
-            (int)readl(((unsigned long)b))); \
-}
-    SHOWREG("gpio-oe", 0x48310034);
-    SHOWREG("setdatout", 0x48310094);
-    SHOWREG("clksel2_pll", 0x48004d44);
-    SHOWREG("clkseldss", 0x48004e40);
-    SHOWREG("clken", 0x48004d00);
-    puts("\n");
-    SHOWREG("FCLKEN", 0x48004e00);
-    SHOWREG("ICLKEN", 0x48004e10);
-    SHOWREG("IDLEST", 0x48004e20);
-    SHOWREG("AutoIdle", 0x48004e30);
-    SHOWREG("ClkSel", 0x48004e40);
-    puts("\n");
-    SHOWREG("timing_h", 0x48050464);
-    SHOWREG("timing_v", 0x48050468);
-    SHOWREG("pol_freq", 0x4805046c);
-    SHOWREG("divisor", 0x48050470);
-    SHOWREG("lcd_size", 0x4805047c);
-    SHOWREG("config", 0x48050444);
-    SHOWREG("control", 0x48050440);
-    SHOWREG("defcolor", 0x4805044c);
-    SHOWREG("sys-cfg", 0x48050010);
-    SHOWREG("sys-stat", 0x48050014);
-    SHOWREG("dss-ctl", 0x48050040);
-    SHOWREG("dss-clk", 0x4805005c);
-    SHOWREG("dc-addr0", 0x48050480);
-    SHOWREG("dc-addr1", 0x48050484);
-
-//            } else {
-//                serial_assign(argv[1]);
-            }
-        }
-        return 0;
-}
-U_BOOT_CMD(
-        tst, 2, 1, do_tst,
-        "test stuff", "Usage: tst reg|set|clear|smps|down"
-);
-
-//#ifdef CONFIG_DRIVER_OMAPDSS
-//#ifdef CONFIG_DISPLAY_SHARP_LQ043T1DG01
-//#include "logos/logo_480x272.h"
-
-//#endif
-
-//void omapdss_init_alt(struct omap_panel *lcd);
 #ifdef CONFIG_VIDEO
 void go_omap3_dss_enable(int x) {
-	/* Setup LCD to display included Splash header */
-//	lcd.logo = header_data;
-
-	/* Request and Activate Backlight Power Supply */
-//	omap_request_gpio(182);
-//	omap_set_gpio_direction(182,0);
-//	omap_set_gpio_dataout(182,1);
-
-	/* Request and Deactivate Panel Backlight PWM Pin */
-//	omap_request_gpio(181);
-//	omap_set_gpio_direction(181,0);
-//	omap_set_gpio_dataout(181,0);
-
 	/* Request and Activate Panel Logic Power Supply Pin */
 	gpio_request(176, "");
 	gpio_direction_output(176,0);
 	gpio_set_value(176,1);
-
-	/* Initialize the Display System */
-        /*if (1==x)*/ //omapdss_init(&lcd);
-        //else if (2==x) omapdss_init_alt(&lcd);
-
-	/* Activate the Backlight PWM Pin */
-//	omap_set_gpio_dataout(181,1);
 }
 #endif
+#ifdef CONFIG_CFB_CONSOLE
+GraphicDevice smi;
+#define TIMING(sw,fp,bp) ( \
+        ((bp & 0xfff) << 20) | \
+        ((fp & 0xfff) << 8) | \
+        (sw & 0xff)\
+        )
+#define DIV(lcd, pcd) (((lcd & 0xff) << 16) | (pcd & 0xff))
+#define SIZE(x, y) ((y-1) << 16 | (x-1))
 
-//#endif
+enum omap_panel_config {
+	OMAP_DSS_LCD_IVS		= 1<<0,
+	OMAP_DSS_LCD_IHS		= 1<<1,
+	OMAP_DSS_LCD_IPC		= 1<<2,
+	OMAP_DSS_LCD_IEO		= 1<<3,
+	OMAP_DSS_LCD_RF			= 1<<4,
+	OMAP_DSS_LCD_ONOFF		= 1<<5,
 
+	OMAP_DSS_LCD_TFT		= 1<<20,
+};
+
+static unsigned int omapdss_set_pol_freq(enum omap_panel_config config, unsigned char acbi, unsigned char acb)
+{
+	unsigned int l = 0;
+
+	l |= (config & OMAP_DSS_LCD_ONOFF) ? (1<<17) : 0;
+	l |= (config & OMAP_DSS_LCD_RF) ? (1<<16) : 0;
+	l |= (config & OMAP_DSS_LCD_IEO) ? (1<<15) : 0;
+	l |= (config & OMAP_DSS_LCD_IPC) ? (1<<14) : 0;
+	l |= (config & OMAP_DSS_LCD_IHS) ? (1<<13) : 0;
+	l |= (config & OMAP_DSS_LCD_IVS) ? (1<<12) : 0;
+	l |= ((acbi & 0x0F) << 8);
+	l |= acb;
+
+        return l;
+}
+
+void * video_hw_init(void) {
+    //register GraphicDevice *pGD = (GraphicDevice *)&smi;
+    struct panel_config pcfg;
+    int vidtype = get_vidtype();
+    int hsw=0, hfp=0, hbp=0;
+    int vsw=0, vfp=0, vbp=0;
+    int lclk = 1, pclk=2, pol_flags = 0;
+    int acbi = 0, acb = 0;
+ 
+    pol_flags = OMAP_DSS_LCD_ONOFF | OMAP_DSS_LCD_RF;
+    if (vidtype) {
+        smi.winSizeX = smi.plnSizeX = 800;
+        smi.winSizeY = smi.plnSizeY = 480;
+        smi.gdfBytesPP = 2;
+        smi.gdfIndex = GDF_16BIT_565RGB;
+        hsw = 0x4f; hfp = 0x03f; hbp = 0x08f;
+        vsw = 0x04; vfp = 0x01c; vbp = 0x048;
+//        pcfg.timing_h   = 0x08f03f4f;
+//        pcfg.timing_v   = 0x04801c04;
+        pcfg.panel_type = 1;
+    } else {
+        smi.winSizeX = smi.plnSizeX = 320;
+        smi.winSizeY = smi.plnSizeY = 240;
+        smi.gdfBytesPP = 1;
+        pcfg.panel_type = 0;
+        pol_flags = 0;
+        smi.gdfIndex = GDF__8BIT_332RGB;
+        /*hsw = 0x00; hfp = 0x001; hbp = 0x001;
+        vsw = 0x01; vfp = 0x001; vbp = 0x001;
+        lclk = 5; pclk = 8;*/
+        lclk = 4; // 48 Mhz original
+        pclk = 10;
+        /* something at the top of the screen
+        hsw = 0x01; hfp = 0x002; hbp = 0x004;
+        vsw = 0x01; vfp = 0x000; vbp = 0x000;*/
+        /*hsw = 0x02; hfp = 0x004; hbp = 0x008;
+        vsw = 0x02; vfp = 0x001; vbp = 0x001;*/
+        hsw = 0x08; hfp = 0x00f; hbp = 0x00f;
+        vsw = 0x08; vfp = 0x004; vbp = 0x004;
+        pclk = 25;
+        acbi = 0/*1*/; acb = 0; //1; 
+    }
+    pcfg.timing_h = TIMING(hsw, hfp, hbp);
+    pcfg.timing_v = TIMING(vsw, vfp, vbp);
+    pcfg.data_lines = 3;
+    pcfg.lcd_size   = SIZE(smi.winSizeX, smi.winSizeY);
+    pcfg.load_mode  = 0; //0x00000204 >> FRAME_MODE_SHIFT;
+    smi.frameAdrs = LCD_VIDEO_ADDR;
+    smi.memSize = smi.winSizeX * smi.winSizeY * smi.gdfBytesPP;
+    pcfg.panel_color= 0;
+    pcfg.divisor    = DIV(lclk, pclk);
+    pcfg.pol_freq   = omapdss_set_pol_freq(pol_flags, acbi, acb); // 0, 0); //0x30000;
+    vidmem_clear(smi.winSizeX, smi.winSizeY, smi.gdfBytesPP);
+    //printf("Done w/ lcd init\n");
+    omap3_dss_panel_config(&pcfg);
+    omap3_dss_enable();
+    return ((void*)&smi);
+}
+#endif
+static int do_lookup(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
+    char buf[32], *pc, *modedb, *end;
+    int len=0;
+
+	if (argc < 2)
+		return 0; //cmd_usage(cmdtp);
+    /* now extract value from modedb env var */
+    sprintf(buf, "%s(", argv[1]);
+
+    modedb = getenv(argv[2]);
+    if (modedb) {
+        pc = strstr(modedb, buf);
+        if (pc) {
+            pc += strlen(buf); /* skip over value and : */
+            end = strchr(pc, ')');
+            if (end) len = end - pc;
+            else len = strlen(pc);
+            if (len < sizeof(buf)) {
+                strncpy(buf, pc, len);
+                setenv(argv[3], buf);
+            }
+        }
+    }
+    return 1;
+}
+
+U_BOOT_CMD(
+	find,4,4,do_lookup,
+	"",
+	""
+);
+
+typedef struct Items {
+    char * name;
+    unsigned long addr;
+};
+
+void dump_vid_regs(void) {
+    struct Items item[] = {
+        {"clken",   0x48004d00},
+        {"fclken",  0x48004e00},
+        {"iclken",  0x48004e10},
+        {"idlest",  0x48004e20},
+        {"autoidle",0x48004e30},
+        {"clksel",  0x48004e40},
+
+        {"sys-cfg", 0x48050010},
+        {"dss-ctl", 0x48050040},
+        {"dss-clk", 0x4805005c},
+        {"control", 0x48050440},
+        {"config",  0x48050444},
+        {"timing_h",0x48050464},
+        {"timing_v",0x48050468},
+        {"pol_freq",0x4805046c},
+        {"divisor", 0x48050470},
+        {"lcd-size",0x4805047c},
+        {"gfx-size",0x4805048c},
+        {"gfx-attr",0x480504a0},
+        {0, 0},
+    };
+    int i;
+
+            for (i=0; 0 != item[i].name; i++) {
+                printf("%8s:(0x%08lx)0x%08lx\n", item[i].name, 
+                            item[i].addr, *((unsigned long *)item[i].addr));
+            }
+}
+
+int do_tst (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
+	if (argc < 2)
+		return 0; //cmd_usage(cmdtp);
+
+	if (strcmp (argv[1],"reg") == 0) {
+            dump_vid_regs();
+        } else {
+		return 0; //cmd_usage(cmdtp);
+        }
+        return 1;
+}
+
+U_BOOT_CMD(
+	tst,4,1,do_tst,
+	"",
+	""
+);

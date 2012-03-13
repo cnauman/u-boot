@@ -114,7 +114,7 @@ void omap3_dss_panel_config(const struct panel_config *panel_cfg)
 	writel(panel_cfg->divisor, &dispc->divisor);
 	writel(panel_cfg->lcd_size, &dispc->size_lcd);
 	writel(dispc->size_lcd, &dispc->gfx_size);
-	writel(GFX_BURST(2) | GFX_FMT(RGB_16) | GFX_EN, 
+	writel(GFX_BURST(2) | GFX_FMT(RGB_16) | GFX_EN,
                 &dispc->gfx_attributes);
 	writel((panel_cfg->load_mode << FRAME_MODE_SHIFT), &dispc->config);
 	writel(((panel_cfg->panel_type << TFTSTN_SHIFT) |
@@ -134,4 +134,13 @@ void omap3_dss_enable(void)
 
 	l |= DISPC_ENABLE;
 	writel(l, &dispc->control);
+
+	/* check for L3 interconnect errors */
+	udelay(1);
+	if (readl(0x68000510)) {
+		udelay(3); //printf("Resetting DSS L3 interconnect\n");
+		writel(1, 0x68005420); /* reset DSS L3 interconnect */
+		udelay(1);
+		writel(0, 0x68005420); /* reset done for DSS L3 interconnect */
+	}
 }
