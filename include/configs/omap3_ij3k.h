@@ -46,8 +46,8 @@
 #include <asm/arch/omap3.h>
 
 /* Display CPU and Board information */
-#define CONFIG_DISPLAY_CPUINFO		1
-#define CONFIG_DISPLAY_BOARDINFO	1
+//#define CONFIG_DISPLAY_CPUINFO		1
+//#define CONFIG_DISPLAY_BOARDINFO	1
 
 /* Clock Defines */
 #define V_OSCK				26000000	/* Clock output from T2 */
@@ -234,6 +234,8 @@
                 /*"video=omapfb:mode:7inch_LCD\0"*/ \
 	/*"nfsopts=hard,tcp,rsize=65536,wsize=65536\0"*/ \
 	"nandrootfs=ubi.mtd=4 root=ubi0:rootfs rootfstype=ubifs\0" \
+	"chkVid=find ${disp} modedb res; set video vram=4M omapfb.mode=${res} omapdss.def_disp=lcd\0" \
+	"modedb=00(stn)01(lcd:800x480)02(lcd:800x480)04(lcd:800x480)08(lcd:640x480)\0" \
 	"nandargs=" \
 		"setenv bootargs " \
                 "${console} " \
@@ -254,8 +256,12 @@
 	"upgrade=if run usbload; then ; else run chkip; fi; imxtract; source ${fileaddr}\0" \
 	"usbload=usb start; fatload usb 0 ${loadaddr} install.img\0" \
 	"chkip=if test $ipaddr -ne \"\" && test $serverip -ne \"\"; then run netboot; else bootp; fi\0" \
-	"write_img=nand erase.part ${name}; nand write.i ${loadaddr} ${name} ${filesize}\0" \
+	"write_img=nand erase.part ${name}; nand write.i ${loadaddr} ${name} ${filesize}; set name;\0" \
 	"netboot=if tftp uImage; then run nandargs; bootm ${loadaddr}; fi\0" \
+	"load_fs=if tftp ubi.img; then set name fs; run write_img; fi\0" \
+	"load_krnl=if tftp uImage; then set name kernel; run write_img; fi\0" \
+	"load_uboot=if tftp u-boot.bin; then set name u-boot; run write_img; fi\0" \
+	"load_xload=if tftp x-load.bin.ift_NAND; then nandecc hw; set name x-loader; run write_img; fi\0" \
 	"stdout=vga\0" \
 	"stderr=vga\0" \
 	""
