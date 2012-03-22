@@ -272,7 +272,9 @@ void board_init_f(ulong bootflag)
 	__asm__ __volatile__("": : :"memory");
 
 	memset((void *)gd, 0, sizeof(gd_t));
-
+#ifdef CONFIG_SILENT_CONSOLE
+	gd->flags |= GD_FLG_SILENT;
+#endif
 	gd->mon_len = _bss_end_ofs;
 #ifdef CONFIG_OF_EMBED
 	/* Get a pointer to the FDT */
