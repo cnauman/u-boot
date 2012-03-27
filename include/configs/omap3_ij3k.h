@@ -185,6 +185,7 @@
 						"512k(x-loader)," \
 						"1920k(u-boot)," \
 						"128k(env)," \
+						"128k(upgrade)," \
 						"4m(kernel)," \
 						"-(fs)"
 
@@ -233,7 +234,7 @@
 		"omapdss.def_disp=lcd\0" \
                 /*"video=omapfb:mode:7inch_LCD\0"*/ \
 	/*"nfsopts=hard,tcp,rsize=65536,wsize=65536\0"*/ \
-	"nandrootfs=ubi.mtd=4 root=ubi0:rootfs rootfstype=ubifs\0" \
+	"nandrootfs=ubi.mtd=5 root=ubi0:rootfs rootfstype=ubifs\0" \
 	"chkVid=find ${disp} modedb res; set video vram=4M omapfb.mode=${res} omapdss.def_disp=lcd\0" \
 	"modedb=00(stn)01(lcd:800x480)02(lcd:800x480)04(lcd:800x480)08(lcd:640x480)\0" \
 	"nandargs=" \
@@ -253,7 +254,7 @@
 		"run netargs; " \
 		"bootm ${loadaddr}\0"*/ \
 	"chkImg=if test $btn -ne 2 && nboot.e kernel; then run nandboot; else run upgrade; fi\0" \
-	"upgrade=if run usbload; then ; else run chkip; fi; imxtract; source ${fileaddr}\0" \
+	"upgrade=if run usbload; then ; else run chkip; fi; if imxtract; then source ${fileaddr}; else echo 'Error in image'; fi\0" \
 	"usbload=usb start; fatload usb 0 ${loadaddr} install.img\0" \
 	"chkip=if test $ipaddr -ne \"\" && test $serverip -ne \"\"; then run netboot; else bootp; fi\0" \
 	"write_img=nand erase.part ${name}; nand write.i ${loadaddr} ${name} ${filesize}; set name;\0" \
