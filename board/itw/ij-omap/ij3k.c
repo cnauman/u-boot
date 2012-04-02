@@ -443,6 +443,7 @@ void * video_hw_init(void) {
     if (vidtype) {
         smi.winSizeX = smi.plnSizeX = 800;
         smi.winSizeY = smi.plnSizeY = 480;
+        if (8 == vidtype) smi.winSizeX = smi.plnSizeX = 640;
         smi.gdfBytesPP = 2;
         smi.gdfIndex = GDF_16BIT_565RGB;
         hsw = 0x4f; hfp = 0x03f; hbp = 0x08f;
