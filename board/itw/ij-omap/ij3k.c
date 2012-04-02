@@ -338,7 +338,7 @@ int misc_init_r(void)
 #endif /* CONFIG_DM9000_NO_SROM */
 #endif
 
-	dieid_num_r();
+//	dieid_num_r();
         CheckMMC();
 #ifdef CONFIG_VIDEO
 //        set_vidtype();
@@ -373,7 +373,15 @@ int board_mmc_init(bd_t *bis)
  */
 int board_eth_init(bd_t *bis)
 {
-	return dm9000_initialize(bis);
+	int ret;
+        ret = dm9000_initialize(bis);
+#ifndef CONFIG_DM9000_NO_SROM
+        {
+        	struct eth_device *dev = eth_get_dev();
+                eth_setenv_enetaddr("ethaddr", dev->enetaddr);
+        }
+#endif
+	return ret;
 }
 #endif
 
@@ -500,6 +508,7 @@ static int do_lookup(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) 
             else len = strlen(pc);
             if (len < sizeof(buf)) {
                 strncpy(buf, pc, len);
+                buf[len] = '\0';
                 setenv(argv[3], buf);
             }
         }
