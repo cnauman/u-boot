@@ -29,6 +29,9 @@
 #include <asm/io.h>
 #include <asm/arch/dss.h>
 
+#include <video_fb.h> /* for video_hw_init */
+#include "videomodes.h"
+
 /*
  * Configure VENC for a given Mode (NTSC / PAL)
  */
@@ -114,11 +117,10 @@ void omap3_dss_panel_config(const struct panel_config *panel_cfg)
 	writel(panel_cfg->divisor, &dispc->divisor);
 	writel(panel_cfg->lcd_size, &dispc->size_lcd);
 	writel(dispc->size_lcd, &dispc->gfx_size);
-	writel(GFX_BURST(2) | GFX_FMT(RGB_16) | GFX_EN,
-                &dispc->gfx_attributes);
+        writel(panel_cfg->gfx_attrib, &dispc->gfx_attributes);
 	writel((panel_cfg->load_mode << FRAME_MODE_SHIFT), &dispc->config);
 	writel(((panel_cfg->panel_type << TFTSTN_SHIFT) |
-		(panel_cfg->data_lines << DATALINES_SHIFT)), &dispc->control);
+		(panel_cfg->data_lines << DATALINES_SHIFT))|3<<29, &dispc->control);
 	writel(panel_cfg->panel_color, &dispc->default_color0);
 }
 
@@ -144,3 +146,95 @@ void omap3_dss_enable(void)
 		writel(0, 0x68005420); /* reset done for DSS L3 interconnect */
 	}
 }
+
+
+#ifdef CONFIG_CFB_CONSOLE
+
+GraphicDevice smi;
+
+static void __pre_setup_video_env(void)
+{
+    /* do nothing */
+}
+void pre_setup_video_env(void)
+	__attribute__((weak, alias("__pre_setup_video_env")));
+
+static void vidmem_clear(void * addr, int width, int height, int bytesPP) {
+    int sze = width * height * bytesPP;
+    memset(addr, 0, sze);
+}
+
+#define TIMING(sw,fp,bp) ( \
+        ((bp & 0xfff) << 20) | \
+        ((fp & 0xfff) << 8) | \
+        (sw & 0xff)\
+        )
+#define DIV(lcd, pcd) (((lcd & 0xff) << 16) | (pcd & 0xff))
+#define SIZE(x, y) ((y-1) << 16 | (x-1))
+
+static unsigned int omapdss_set_pol_freq(enum omap_panel_config config, unsigned char acbi, unsigned char acb)
+{
+	unsigned int l = 0;
+
+	l |= (config & OMAP_DSS_LCD_ONOFF) ? (1<<17) : 0;
+	l |= (config & OMAP_DSS_LCD_RF) ? (1<<16) : 0;
+	l |= (config & OMAP_DSS_LCD_IEO) ? (1<<15) : 0;
+	l |= (config & OMAP_DSS_LCD_IPC) ? (1<<14) : 0;
+	l |= (config & OMAP_DSS_LCD_IHS) ? (1<<13) : 0;
+	l |= (config & OMAP_DSS_LCD_IVS) ? (1<<12) : 0;
+	l |= ((acbi & 0x0F) << 8);
+	l |= acb;
+
+        return l;
+}
+
+void * video_hw_init(void) {
+    //register GraphicDevice *pGD = (GraphicDevice *)&smi;
+    struct panel_config pcfg;
+/*    int hsw=0, hfp=0, hbp=0;
+    int vsw=0, vfp=0, vbp=0;
+    int lclk = 1, pclk=2, pol_flags = 0;
+    int acbi = 0, acb = 0;*/
+	int bpp = 0;
+	struct ctfb_res_modes *res_mode;
+	struct ctfb_res_modes var_mode;
+        char * penv;
+	pre_setup_video_env();
+	if (NULL == (penv = getenv("ub_vid"))) return NULL;
+
+	res_mode = (struct ctfb_res_modes *) &var_mode;
+	bpp = video_get_params (res_mode, penv);
+
+	smi.winSizeX = res_mode->xres;
+	smi.winSizeY = res_mode->yres;
+	smi.plnSizeX = res_mode->xres;
+	smi.plnSizeY = res_mode->yres;
+
+        smi.gdfBytesPP = bpp;
+        if (2 == bpp) smi.gdfIndex = GDF_16BIT_565RGB;
+        else if (1 == bpp) smi.gdfIndex = GDF__8BIT_332RGB;
+        pcfg.panel_type = res_mode->vmode&1;
+
+    pcfg.timing_h = TIMING(res_mode->hsync_len, res_mode->right_margin, res_mode->left_margin); //hsw, hfp, hbp);
+    pcfg.timing_v = TIMING(res_mode->vsync_len, res_mode->upper_margin, res_mode->lower_margin); //vsw, vfp, vbp);
+    pcfg.data_lines = 3;
+    pcfg.lcd_size   = SIZE(smi.winSizeX, smi.winSizeY);
+    pcfg.load_mode  = 0; //0x00000204 >> FRAME_MODE_SHIFT;
+    smi.frameAdrs = LCD_VIDEO_ADDR;
+    smi.memSize = smi.winSizeX * smi.winSizeY * smi.gdfBytesPP;
+    pcfg.panel_color= 0;
+    pcfg.divisor    = DIV(res_mode->pixclock >> 8, res_mode->pixclock & 0xff); //lclk, pclk);
+    pcfg.pol_freq   = omapdss_set_pol_freq(res_mode->vmode >>1, res_mode->sync >> 8, res_mode->sync & 0xff); //pol_flags, acbi, acb); // 0, 0); //0x30000;
+    //printf("Done w/ lcd init\n");
+        /*if (!panel_cfg->panel_type)
+	    pcfg.gfx_attrib = GFX_BURST(2) | GFX_FMT(RGB_16) //GFX_FMT(BMP_8) 
+                    | GFX_EN;
+        else*/
+	    pcfg.gfx_attrib = GFX_BURST(2) | GFX_FMT(RGB_16) | GFX_EN;
+    vidmem_clear(smi.frameAdrs, smi.winSizeX, smi.winSizeY, smi.gdfBytesPP);
+    omap3_dss_panel_config(&pcfg);
+    omap3_dss_enable();
+
+    return ((void*)&smi);
+}
+#endif

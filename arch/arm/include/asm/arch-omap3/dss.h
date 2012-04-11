@@ -156,6 +156,7 @@ struct venc_regs {
 
 /* Gfx params */
 #define RGB_16                                  (6)
+#define BMP_8                                   (3)
 #define GFX_FMT(val)                            ((val) << 1)
 #define GFX_BURST(val)                          ((val) << 6)
 #define GFX_EN                                  (1)
@@ -173,6 +174,7 @@ struct panel_config {
 	u32 data_lines;
 	u32 load_mode;
 	u32 panel_color;
+        u32 gfx_attrib;
 };
 
 /*
@@ -182,5 +184,16 @@ void omap3_dss_venc_config(const struct venc_regs *venc_cfg,
 			u32 height, u32 width);
 void omap3_dss_panel_config(const struct panel_config *panel_cfg);
 void omap3_dss_enable(void);
+
+enum omap_panel_config {
+	OMAP_DSS_LCD_IVS		= 1<<0,
+	OMAP_DSS_LCD_IHS		= 1<<1,
+	OMAP_DSS_LCD_IPC		= 1<<2,
+	OMAP_DSS_LCD_IEO		= 1<<3,
+	OMAP_DSS_LCD_RF			= 1<<4,
+	OMAP_DSS_LCD_ONOFF		= 1<<5,
+
+	OMAP_DSS_LCD_TFT		= 1<<20,
+};
 
 #endif /* DSS_H */
