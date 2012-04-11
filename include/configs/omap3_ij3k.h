@@ -230,19 +230,18 @@
 	"loadaddr=0x82000000\0" \
         "autostart=n\0" \
 	/*"console=console=ttyO2,115200n8\0"*/ \
-	"video=vram=4M omapfb.mode=lcd:800x480 " \
-		"omapdss.def_disp=lcd\0" \
+	/*"video=vram=4M omapfb.mode=lcd:800x480 "*/ \
+		/*"omapdss.def_disp=lcd\0"*/ \
                 /*"video=omapfb:mode:7inch_LCD\0"*/ \
 	/*"nfsopts=hard,tcp,rsize=65536,wsize=65536\0"*/ \
 	"nandrootfs=ubi.mtd=5 root=ubi0:rootfs rootfstype=ubifs\0" \
 	"chkVid=find ${disp} modedb res; set video vram=4M omapfb.mode=${res} omapdss.def_disp=lcd\0" \
 	"modedb=00(stn)01(lcd:800x480)02(lcd:800x480)04(lcd:800x480)08(lcd:640x480)\0" \
-	"nandargs=" \
+	"nandargs=run chkVid; " \
 		"setenv bootargs " \
-                "${console} " \
+                "${kopts} " \
                 "${video} " \
-		"${nandrootfs} " \
-		"${kernelopts}\0" \
+		"${nandrootfs}\0" \
         "mtdparts=" MTDPARTS_DEFAULT "\0" \
         "mtdids=" MTDIDS_DEFAULT "\0" \
 	"nandboot=echo Booting from nand ...; " \
