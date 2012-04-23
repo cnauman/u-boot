@@ -215,7 +215,7 @@ void * video_hw_init(void) {
         else if (1 == bpp) smi.gdfIndex = GDF__8BIT_332RGB;
         pcfg.panel_type = res_mode->vmode&1;
 
-    pcfg.timing_h = TIMING(res_mode->hsync_len, res_mode->right_margin, res_mode->left_margin); //hsw, hfp, hbp);
+    pcfg.timing_h = TIMING(res_mode->hsync_len, res_mode->left_margin, res_mode->right_margin); //hsw, hfp, hbp);
     pcfg.timing_v = TIMING(res_mode->vsync_len, res_mode->upper_margin, res_mode->lower_margin); //vsw, vfp, vbp);
     pcfg.data_lines = 3;
     pcfg.lcd_size   = SIZE(smi.winSizeX, smi.winSizeY);

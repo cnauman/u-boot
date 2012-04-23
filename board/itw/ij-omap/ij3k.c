@@ -270,22 +270,7 @@ void go_omap3_dss_enable(int x) {
 	gpio_direction_output(176,0);
 	gpio_set_value(176,1);
 }
-#define RED_COLR    (0xf000)
-#define WHITE_COLR  (0xffff)
-void vidmem_set(void * addr, int width, int height, int bytesPP) {
-    int sze = width * height * bytesPP;
-    int y, x, linelen = bytesPP*width;
-    for (y=0; y < height; y++) {
-        for (x=0; x < width; x++) {
-            if ((0 == x) || ((width - 1) == x)
-                    || (0 == y) || ((height - 1) == y))
-                *(unsigned short *)addr = RED_COLR;
-            else
-                *(unsigned short *)addr = WHITE_COLR;
-            addr += bytesPP;
-        }
-    }
-}
+
 void pre_setup_video_env(void) {
     int vidtype = get_vidtype();
     char buf[255];
@@ -329,14 +314,14 @@ void pre_setup_video_env(void) {
         vsw = 0x02; vfp = 0x001; vbp = 0x001;*/
 //        hsw = 0x0f; hfp = 0x00f; hbp = 0x00f;
 //        vsw = 0x08; vfp = 0x004; vbp = 0x004;
-//hsw = hfp = hbp = 0;
-//vsw = vfp = vbp = 0;
+hsw = hfp = hbp = 0;
+vsw = vfp = vbp = 0;
         //pclk = 25;
         //acbi = 1; acb = 1;
         //lclk = 8;
     }
     sprintf(buf, "x:%d,y:%d,depth:%d,pclk:%d"
-                 ",vs:%d,up:%d,lo:%d,hs:%d,ri:%d,le:%d"
+                 ",vs:%d,up:%d,lo:%d,hs:%d,le:%d,ri:%d"
                  ",sync:%d,vmode:%d",
             x, y, bpp, lclk<<8|pclk, 
             vsw, vfp, vbp, hsw, hfp, hbp, 
@@ -491,34 +476,64 @@ U_BOOT_CMD(
 	""
 );
 
+#define RED_COLR    (0xf000)
+#define WHT_COLR    (0xffff)
+#define BLK_COLR    (0)
+void vidmem_set(void * addr, int width, int height, int bytesPP, int bg_colr) {
+    //int sze = width * height * bytesPP;
+    int y, /*x,*/ linelen = bytesPP*width;
+    unsigned short * cur = addr;
+    memset(addr, bg_colr, height*linelen);
+
+    //for (x=0; x < width; x++) *cur++ = RED_COLR;
+
+    for (y=0; y < height; y++) {
+        cur = addr + (y*linelen);
+        *cur = RED_COLR;
+        cur += width-2;
+        //for (x=1; x < (width-2); x++) *cur++ = bg_colr;
+        *cur++ = RED_COLR;
+//        *cur++ = RED_COLR;
+    }
+    cur = addr + (y*linelen);
+    //for (x=0; x < width; x++) *cur++ = RED_COLR;
+}
+
+#define _SET(val) *gpio_set = val
+#define _CLR(val) *gpio_clr = val
+
 #define FLM     (68)
 #define LM      (67)
 #define PCLK    (66)
 #define ACBIAS  (69)
 #define DAT(val) (val << (70-64))
-#define DAT_SET(val) *gpio_set = DAT(val) //writel(DAT(val), 0x49052094) // pins[70:77]
-#define CLR_DAT() *gpio_clr = DAT(0xff) //writel(DAT(0xff), 0x49052090)
+#define DAT_SET(val) _SET(DAT(val))
+#define CLR_DAT() _CLR(DAT(0xff))
 #define PMASK(pin) (1 << (pin-64))
-#define IO_HI(pin) *gpio_set = PMASK(pin) //writel(PMASK(pin), 0x49052094) //gpio_set_value(pin,1)
-#define IO_LO(pin) *gpio_clr = PMASK(pin) //writel(PMASK(pin), 0x49052090) //gpio_set_value(pin,0)
+#define IO_HI(pin) _SET(PMASK(pin))
+#define IO_LO(pin) _CLR(PMASK(pin))
 #define IO_TGL(pin) { IO_HI(pin); IO_LO(pin); }
 
-void do_vid_show(int rep) {
+void do_vid_show(int last, int rep) {
 //    unsigned char * pVid = (unsigned char *)LCD_VIDEO_ADDR;
     const int wid = 320, ht = 240;
+    const int num = wid*3/8;
     int x, y;
     volatile register unsigned long * gpio_set = (unsigned long *)0x49052094;
     volatile register unsigned long * gpio_clr = (unsigned long *)0x49052090;
-    CLR_DAT();
+    //const char mask[] = {0x92, 0x49, 0x24};
     while (rep--) {
         for (y=0; y < ht; y++) {
+            CLR_DAT();
+            DAT_SET(0x80);
             if (0 == y) IO_HI(FLM);
-            for (x=0; x < wid*3/8; x++) {
-                if (x==y) DAT_SET(0xff);
-                CLR_DAT(); //DAT_SET(*pVid++);
+            for (x=0; x < (num-1); x++) {
                 IO_TGL(PCLK);
-                CLR_DAT();
+                if (!x) CLR_DAT();
             }
+            DAT_SET(last); //0x2f); //0x04); //0x24);
+            IO_TGL(PCLK);
+
             IO_TGL(LM);
             if (y & 1) IO_LO(ACBIAS);
             else IO_HI(ACBIAS);
@@ -533,13 +548,13 @@ void do_vid_disp(int flag) {
 
     if (flag) {
         args = (IDIS | PTD | DIS | M0);
-        for (i=66; i < 77; i++) gpio_free(i);
+        for (i=66; i <= 77; i++) gpio_free(i);
     } else {
         printf("Disabling display\n");
         args = (IDIS | PTD | DIS | M4);
         writel(readl(dispc_ctl)&~(1), dispc_ctl);
         udelay(1000);
-        for (i=66; i < 77; i++) {
+        for (i=66; i <= 77; i++) {
             gpio_request(i, "");
             gpio_direction_output(i,0);
             gpio_set_value(i,0);
@@ -549,6 +564,7 @@ void do_vid_disp(int flag) {
     // change MUX
     MUX_VAL(CP(DSS_DATA0), args);
     MUX_VAL(CP(DSS_DATA1), args);
+    MUX_VAL(CP(DSS_DATA2), args);
     MUX_VAL(CP(DSS_DATA3), args);
     MUX_VAL(CP(DSS_DATA4), args);
     MUX_VAL(CP(DSS_DATA5), args);
@@ -624,13 +640,18 @@ int do_tst (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
             do_vid_disp(1);
         } else if (0 == strcmp(argv[1], "gpio")) {
             do_vid_disp(0);
-        } else if (0 == strcmp(argv[1], "red")) {
-            vidmem_set(LCD_VIDEO_ADDR, 320, 240, 2);
+        } else if (0 == strcmp(argv[1], "wht")) {
+            vidmem_set((void *)LCD_VIDEO_ADDR, 320, 240, 2, WHT_COLR);
+        } else if (0 == strcmp(argv[1], "blk")) {
+            vidmem_set((void *)LCD_VIDEO_ADDR, 320, 240, 2, BLK_COLR);
         } else if (0 == strcmp(argv[1], "show")) {
             if (2 < argc) {
                 int rep = getval(argv[2]);
+                int last = getval(argv[3]);
                 printf("%dX\n", rep);
-                do_vid_show(rep);
+                do_vid_disp(0);
+                do_vid_show(last, rep);
+                do_vid_disp(1);
             }
         } else {
 		return 0; //cmd_usage(cmdtp);
@@ -639,7 +660,7 @@ int do_tst (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 }
 
 U_BOOT_CMD(
-	disp,4,1,do_tst,
+	disp,5,1,do_tst,
 	"",
 	""
 );
