@@ -235,8 +235,11 @@
                 /*"video=omapfb:mode:7inch_LCD\0"*/ \
 	/*"nfsopts=hard,tcp,rsize=65536,wsize=65536\0"*/ \
 	"nandrootfs=ubi.mtd=5 root=ubi0:rootfs rootfstype=ubifs\0" \
-	"chkVid=find ${disp} modedb res; set video vram=4M omapfb.mode=${res} omapdss.def_disp=lcd\0" \
-	"modedb=00(stn)01(lcd:800x480)02(lcd:800x480)04(lcd:800x480)08(lcd:640x480)\0" \
+	"chkVid=find ${disp} res_db res; find ${disp} dispdb defdisp;" \
+                "set video vram=4M omapfb.mode=${defdisp}:${res} " \
+                "omapdss.def_disp=${defdisp}\0" \
+	"res_db=00(320x240)01(800x480)02(800x480)04(800x480)08(640x480)\0" \
+	"dispdb=00(stn)01(lcd)02(lcd)04(lcd)08(lcd)\0" \
 	"nandargs=run chkVid; " \
 		"setenv bootargs " \
                 "${kopts} " \
