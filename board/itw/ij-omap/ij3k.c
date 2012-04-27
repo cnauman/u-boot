@@ -447,8 +447,10 @@ static int do_lookup(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) 
     char buf[32], *pc, *modedb, *end;
     int len=0;
 
-	if (argc < 2)
+    if (argc) setenv(argv[argc-1], "");
+	if (argc < 4) {
 		return 0; //cmd_usage(cmdtp);
+        }
     /* now extract value from modedb env var */
     sprintf(buf, "%s(", argv[1]);
 
