@@ -241,7 +241,7 @@
                 "else " \
                     "set video;" \
                 "fi\0" \
-	"res_db=00(320x240)01(800x480)02(800x480)04(800x480)08(640x480)\0" \
+	"res_db=00(320x240@80M)01(800x480)02(800x480)04(800x480)08(640x480)\0" \
 	"dispdb=00(stn)01(lcd)02(lcd)04(lcd)08(lcd)\0" \
 	"nandargs=run chkVid; " \
 		"setenv bootargs " \
