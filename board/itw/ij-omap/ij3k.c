@@ -358,7 +358,7 @@ int misc_init_r(void)
 	twl4030_power_init();
 #endif
 #ifdef CONFIG_TWL4030_LED
-	twl4030_led_init(0/*TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON*/);
+	twl4030_led_init(/*0*/TWL4030_LED_LEDEN_LEDAON/* | TWL4030_LED_LEDEN_LEDBON*/);
 #endif
 #ifdef CONFIG_VIDEO
         init_smps();
