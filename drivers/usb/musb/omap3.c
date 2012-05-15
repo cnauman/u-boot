@@ -133,6 +133,7 @@ int musb_platform_init(void)
 #ifdef CONFIG_OMAP3_EVM
 		musb_cfg.extvbus = omap3_evm_need_extvbus();
 #endif
+		musb_cfg.extvbus = 1; //omap3_evm_need_extvbus();
 
 #ifdef CONFIG_OMAP4430
 		u32 *usbotghs_control = (u32 *)(CTRL_BASE + 0x33C);
