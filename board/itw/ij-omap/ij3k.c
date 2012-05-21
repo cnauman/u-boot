@@ -277,7 +277,7 @@ void pre_setup_video_env(void) {
     int x, y, bpp;
     int hsw=0, hfp=0, hbp=0;
     int vsw=0, vfp=0, vbp=0;
-    int lclk = 1, pclk=2, pol_flags = 0;
+    int lclk = 2, pclk=2, pol_flags = 0;
     int acbi = 0, acb = 0, panel_type=0;
     const char * env_name = "ub_vid";
 
@@ -287,10 +287,11 @@ void pre_setup_video_env(void) {
     if (vidtype) {
         x = 800;
         y = 480;
-        if (8 == vidtype) x = 640;
         bpp = 2;
         hsw = 0x4f; hfp = 0x03f; hbp = 0x08f;
         vsw = 0x04; vfp = 0x01c; vbp = 0x048;
+        if (8 == vidtype) x = 640;
+        else hsw = 1;
 //        pcfg.timing_h   = 0x08f03f4f;
 //        pcfg.timing_v   = 0x04801c04;
         panel_type = 1;
