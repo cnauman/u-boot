@@ -158,26 +158,26 @@ const omap3_sysinfo sysinfo = {
 	MUX_VAL(CP(DSS_DATA22),		(IDIS | PTD | DIS | M0)) /*DSS_DATA22*/\
 	MUX_VAL(CP(DSS_DATA23),		(IDIS | PTD | DIS | M0)) /*DSS_DATA23*/\
  /* CAMERA */\
-	MUX_VAL(CP(CAM_HS),		(IEN  | PTU | EN  | M0)) /*CAM_HS */\
-	MUX_VAL(CP(CAM_VS),		(IEN  | PTU | EN  | M0)) /*CAM_VS */\
-	MUX_VAL(CP(CAM_XCLKA),		(IDIS | PTD | DIS | M0)) /*CAM_XCLKA*/\
-	MUX_VAL(CP(CAM_PCLK),		(IEN  | PTU | EN  | M0)) /*CAM_PCLK*/\
+	MUX_VAL(CP(CAM_HS),		(IDIS | PTD | DIS | M4)) /*CAM_HS */\
+	MUX_VAL(CP(CAM_VS),		(IDIS | PTD | DIS | M4)) /*CAM_VS */\
+	MUX_VAL(CP(CAM_XCLKA),		(IDIS | PTD | DIS | M4)) /*CAM_XCLKA*/\
+	MUX_VAL(CP(CAM_PCLK),		(IDIS | PTD | DIS | M4)) /*CAM_PCLK*/\
 	MUX_VAL(CP(CAM_FLD),		(IDIS | PTD | DIS | M4)) /*GPIO_98*/\
-	MUX_VAL(CP(CAM_D0),		(IEN  | PTD | DIS | M0)) /*CAM_D0*/\
-	MUX_VAL(CP(CAM_D1),		(IEN  | PTD | DIS | M0)) /*CAM_D1*/\
-	MUX_VAL(CP(CAM_D2),		(IEN  | PTD | DIS | M0)) /*CAM_D2*/\
-	MUX_VAL(CP(CAM_D3),		(IEN  | PTD | DIS | M0)) /*CAM_D3*/\
-	MUX_VAL(CP(CAM_D4),		(IEN  | PTD | DIS | M0)) /*CAM_D4*/\
-	MUX_VAL(CP(CAM_D5),		(IEN  | PTD | DIS | M0)) /*CAM_D5*/\
-	MUX_VAL(CP(CAM_D6),		(IEN  | PTD | DIS | M0)) /*CAM_D6*/\
-	MUX_VAL(CP(CAM_D7),		(IEN  | PTD | DIS | M0)) /*CAM_D7*/\
+	MUX_VAL(CP(CAM_D0),		(IEN  | PTD | DIS | M4)) /*CAM_D0*/\
+	MUX_VAL(CP(CAM_D1),		(IEN  | PTD | DIS | M4)) /*CAM_D1*/\
+	MUX_VAL(CP(CAM_D2),		(IEN  | PTD | DIS | M4)) /*CAM_D2*/\
+	MUX_VAL(CP(CAM_D3),		(IEN  | PTD | DIS | M4)) /*CAM_D3*/\
+	MUX_VAL(CP(CAM_D4),		(IEN  | PTD | DIS | M4)) /*CAM_D4*/\
+	MUX_VAL(CP(CAM_D5),		(IEN  | PTD | DIS | M4)) /*CAM_D5*/\
+	MUX_VAL(CP(CAM_D6),		(IEN  | PTD | DIS | M4)) /*CAM_D6*/\
+	MUX_VAL(CP(CAM_D7),		(IEN  | PTD | DIS | M4)) /*CAM_D7*/\
 	MUX_VAL(CP(CAM_D8),		(IEN  | PTU | EN  | M4)) /*CAM_D8*/\
 	MUX_VAL(CP(CAM_D9),		(IEN  | PTU | EN  | M4)) /*CAM_D9*/\
-	MUX_VAL(CP(CAM_D10),		(IEN  | PTD | DIS | M0)) /*CAM_D10*/\
-	MUX_VAL(CP(CAM_D11),		(IEN  | PTD | DIS | M0)) /*CAM_D11*/\
-	MUX_VAL(CP(CAM_XCLKB),		(IDIS | PTD | DIS | M0)) /*CAM_XCLKB*/\
-	MUX_VAL(CP(CAM_WEN),		(IEN  | PTD | DIS | M4)) /*GPIO_167*/\
-	MUX_VAL(CP(CAM_STROBE),		(IDIS | PTD | DIS | M0)) /*CAM_STROBE*/\
+	MUX_VAL(CP(CAM_D10),		(IDIS | PTD | DIS | M4)) /*CAM_D10*/\
+	MUX_VAL(CP(CAM_D11),		(IDIS | PTD | DIS | M4)) /*CAM_D11*/\
+	MUX_VAL(CP(CAM_XCLKB),		(IDIS | PTD | DIS | M4)) /*CAM_XCLKB*/\
+	MUX_VAL(CP(CAM_WEN),		(IDIS | PTD | DIS | M4)) /*GPIO_167*/\
+	MUX_VAL(CP(CAM_STROBE),		(IDIS | PTD | DIS | M4)) /*CAM_STROBE*/\
 	MUX_VAL(CP(CSI2_DX0),		(IEN  | PTD | DIS | M0)) /*CSI2_DX0*/\
 	MUX_VAL(CP(CSI2_DY0),		(IEN  | PTD | DIS | M0)) /*CSI2_DY0*/\
 	MUX_VAL(CP(CSI2_DX1),		(IEN  | PTD | DIS | M0)) /*CSI2_DX1*/\

@@ -114,17 +114,76 @@ void CheckMMC(void) {
 }
 
 #ifdef CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
-int overwrite_console (void) {
-    int gpio_pins[] = {107, 108,/* 109, 110,*/ 0}, i, ret = 0;
-
-    con_override = 0;
-    for (i=0; gpio_pins[i]; i++) {
-	gpio_request(gpio_pins[i], "");
-	gpio_direction_input(gpio_pins[i]);
-	con_override |= (~gpio_get_value(gpio_pins[i]) & 1);
-        con_override <<= 1;
-        gpio_free(gpio_pins[i]);
+unsigned char read_rows(const int gpios[]) {
+    int i, row=0;
+    for (i=0; gpios[i]; i++) {
+        row |= (~gpio_get_value(gpios[i]) & 1) << i;
     }
+    return row;
+}
+
+//	KEY(0, 4, KEY_U),
+//	KEY(3, 8, KEY_V),
+unsigned char read_keyboard(void) {
+    static const int omap_kbd_row_gpios[] = { 
+                     99, // row 0
+                    100, // row 1
+                    101, // row 2
+                    102, // row 3
+                    103, // row 4
+                    104, // row 5
+                    105, // row 6
+                    106, // row 7
+                    0,
+                };
+
+    static const int omap_kbd_col_gpios[] = { 
+                     96, // col 0
+                    111, // col 1
+                     97, // col 2
+                     95, // col 3
+                     94, // col 4
+                     98, // col 5
+                    167, // col 6
+                    126, // col 7
+                    109, // col 8
+                    110, // col 9
+                    0,
+                };
+    static const int itms[] = {8, 4, 0};
+    static const int match[] = {1<<3, 1<<0, 0};
+
+    int row=0, col=-1, ret = 0, i;
+
+    for (i=0; omap_kbd_col_gpios[i]; i++) {
+	    gpio_request(omap_kbd_col_gpios[i], "");
+            gpio_direction_output(omap_kbd_col_gpios[i], 1);
+    }
+    for (i=0; omap_kbd_row_gpios[i]; i++) {
+        gpio_request(omap_kbd_row_gpios[i], "");
+        gpio_direction_input(omap_kbd_row_gpios[i]);
+    }
+
+    for (i=0; itms[i]; i++) {
+        col = itms[i];
+        gpio_direction_output(omap_kbd_col_gpios[col], 0);
+        udelay(10);
+        row = read_rows(omap_kbd_row_gpios);
+        gpio_direction_output(omap_kbd_col_gpios[col], 1);
+        ret <<= 1;
+        ret |= (row == match[i]);
+    }
+
+    for (i=0; omap_kbd_col_gpios[i]; i++) gpio_free(omap_kbd_col_gpios[i]);
+    for (i=0; omap_kbd_row_gpios[i]; i++) gpio_free(omap_kbd_row_gpios[i]);
+    return ret;
+}
+
+int overwrite_console (void) {
+    int ret = 0;
+
+    con_override = read_keyboard();
+
     ret = ((con_override >> 1) & 1); 
 
 //    if (ret)
