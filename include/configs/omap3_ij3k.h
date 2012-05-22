@@ -260,7 +260,7 @@
 		"bootm ${loadaddr}\0"*/ \
 	"chkImg=if test $btn -eq 0 && nboot.e kernel; then run nandboot; elif test $btn -ne 2; then run upgrade; else echo cmd; fi\0" \
 	"upgrade=if run usbload; then ; else run chkip; fi; if imxtract; then source ${fileaddr}; else echo 'Error in image'; fi\0" \
-	"usbload=usb start; fatload usb 0 ${loadaddr} install.img\0" \
+	"usbload=usb start; fatload usb 0 ${loadaddr} upgrade.img\0" \
 	"chkip=if test $ipaddr -ne \"\" && test $serverip -ne \"\"; then run netboot; else bootp; fi\0" \
 	"write_img=nand erase.part ${name}; nand write.i ${loadaddr} ${name} ${filesize}; set name;\0" \
 	"netboot=if tftp uImage; then run nandargs; bootm ${loadaddr}; fi\0" \
